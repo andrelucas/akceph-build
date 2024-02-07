@@ -7,7 +7,7 @@ set -e
 source "$SCRIPTDIR/vars.sh"
 source "$SCRIPTDIR/lib.sh"
 
-tmpdir=$(mktemp -d)
+tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
 trap 'rm -rf $tmpdir' EXIT
 
 function usage() {
