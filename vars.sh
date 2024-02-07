@@ -1,7 +1,8 @@
 # shellcheck shell=bash
 
 export CCACHE_DIR=$HOME/.ccache
-export CCACHE_CONF=$HOME/.ccache/ccache.conf
+# Make CCACHE_CONF under CCACHE_DIR or you'll confuse matters.
+export CCACHE_CONF=$CCACHE_DIR/ccache.conf
 export CEPH_SRC=~/git/ceph
 export DOCKER=docker
 export IMAGE=cbuild:latest

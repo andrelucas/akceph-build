@@ -44,7 +44,7 @@ if [[ ! -d $CCACHE_DIR ]]; then
     mkdir -p "$CCACHE_DIR"
 fi
 if [[ ! -f $CCACHE_CONF ]]; then
-    cp tools/ccache.conf "$CCACHE_CONF"
+    install tools/ccache.conf "$CCACHE_CONF"
 fi
 
 set -e -x
@@ -54,5 +54,5 @@ $DOCKER run --rm \
     -v "$CEPH_SRC":"$C_SRC" \
     -v "$TOOLS_SRC":"$C_TOOLS" \
     -v "$CCACHE_DIR":"$C_CCACHE" \
-    -v "$CCACHE_CONF":"$C_CCACHE/ccache.conf" \
+    -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" $IMAGE "${runcmd[@]}"
