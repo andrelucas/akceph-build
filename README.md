@@ -13,7 +13,10 @@ $ vim vars.sh  # Make this match reality.
 # Build from source into Linux binaries in BUILDDIR/bin.
 $ ./build-ceph.sh
 
-# Build Debian packages using `make-debs.sh`.
+# Build Debian packages using `make-debs.sh` (v17).
+$ ./build-ceph.sh -- -D
+
+# Build Debian packages using `dpkg-buildpackage` (v18).
 $ ./build-ceph.sh -- -d
 
 # Just construct the build image. Note this will be customised to your
