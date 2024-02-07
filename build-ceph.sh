@@ -47,6 +47,15 @@ if [[ ! -f $CCACHE_CONF ]]; then
     install tools/ccache.conf "$CCACHE_CONF"
 fi
 
+# Create a preinstall environment that matches the one built into the base
+# image. This allows multiple versions of the base image.
+tmpdir=$(mktemp -d)
+build_preinstall "$tmpdir/preinstall"
+pushd "$tmpdir"
+tag=$(hash_dir preinstall)
+echo "Run: Preinstall image tag: $tag"
+popd
+
 set -e -x
 $DOCKER run --rm \
     -v "/etc/passwd:/etc/passwd:ro" \
@@ -55,4 +64,4 @@ $DOCKER run --rm \
     -v "$TOOLS_SRC":"$C_TOOLS" \
     -v "$CCACHE_DIR":"$C_CCACHE" \
     -e "CCACHE_DIR=$C_CCACHE" \
-    "${runopt[@]}" $IMAGE "${runcmd[@]}"
+    "${runopt[@]}" "$IMAGENAME:$tag" "${runcmd[@]}"
