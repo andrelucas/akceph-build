@@ -39,6 +39,14 @@ runopt+=(-it) # Always interactive - we want to be able to Ctrl-C.
 # Rely on Docker and this script to not rebuild from scratch.
 ./build-container.sh
 
+# Make sure the ccache configuration is sane.
+if [[ ! -d $CCACHE_DIR ]]; then
+    mkdir -p "$CCACHE_DIR"
+fi
+if [[ ! -f $CCACHE_CONF ]]; then
+    cp tools/ccache.conf "$CCACHE_CONF"
+fi
+
 set -e -x
 $DOCKER run --rm \
     -v "/etc/passwd:/etc/passwd:ro" \
