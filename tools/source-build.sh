@@ -6,12 +6,13 @@ function usage() {
 }
 
 debbuild=0
+old_debbuild=0
 releasetype=RelWithDebInfo
 
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "c:dt:" o; do
+while getopts "c:dDt:" o; do
     case "${o}" in
         c)
             # shellcheck disable=SC2206
@@ -19,6 +20,9 @@ while getopts "c:dt:" o; do
             ;;
         d)
             debbuild=1
+            ;;
+        D)
+            old_debbuild=1
             ;;
         t)
             BUILD_TYPE=$OPTARG
@@ -43,6 +47,15 @@ export NINJA_STATUS="[%p :: t=%t/f=%f/r=%r :: %e] "
 BUILD_NPROC="${BUILD_NPROC:-$(nproc)}"
 export BUILD_NPROC
 
+function old_debbuild() {
+    env DEB_BUILD_OPTIONS="parallel=$(nproc)" ./make-debs.sh "$@"
+}
+
+function debbuild() {
+    sudo apt-get install -y debhelper
+    env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage -uc -us "$@"
+}
+
 function srcbuild() {
     export BUILD_DIR=build.$BUILD_TYPE
 
@@ -61,12 +74,9 @@ function srcbuild() {
     ninja "$@"
 }
 
-function debbuild() {
-    sudo apt-get install -y debhelper
-    env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage -uc -us "$@"
-}
-
-if [[ $debbuild -eq 1 ]]; then
+if [[ $old_debbuild -eq 1 ]]; then
+    old_debbuild "$@"
+elif [[ $debbuild -eq 1 ]]; then
     debbuild "$@"
 else
     srcbuild "$@"
