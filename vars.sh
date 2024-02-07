@@ -17,6 +17,7 @@ function hash_dir() {
     local d="$1"
     find "$d" -type f -print0 | \
         xargs -0 sha256sum | \
+        sort | \
         sha256sum | \
         cut -c1-16
 }
