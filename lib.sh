@@ -16,5 +16,9 @@ function build_preinstall() {
     rm -rf "$PRE_DIR"
     mkdir -p "$PRE_DIR"
     cp "$CEPH_SRC"/install-deps.sh "$PRE_DIR"
-    cp -r "$CEPH_SRC"/debian "$PRE_DIR"
+    # Copy *only the git-tracked files* from the debian directory.
+    pushd "$CEPH_SRC/debian" || exit 1
+    mkdir -p "$PRE_DIR/debian"
+    git ls-tree -r HEAD --name-only | xargs -I {} cp --parents {} "$PRE_DIR/debian"
+    popd || exit 1
 }
