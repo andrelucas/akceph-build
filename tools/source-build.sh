@@ -58,17 +58,16 @@ function srcbuild() {
     cd "$BUILD_DIR"
 
     # Run Ninja with whatever parameters are passed to this script.
-    ninja
+    ninja "$@"
 }
 
 function debbuild() {
     sudo apt-get install -y debhelper
-    # XXX quicker hack
-    env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage --build=binary -uc -us
+    env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage -uc -us "$@"
 }
 
 if [[ $debbuild -eq 1 ]]; then
-    debbuild
+    debbuild "$@"
 else
-    srcbuild
+    srcbuild "$@"
 fi
