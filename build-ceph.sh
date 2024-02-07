@@ -3,6 +3,9 @@
 SCRIPTDIR="$(dirname "$0")"
 source "$SCRIPTDIR/vars.sh" || exit 1
 
+tmpdir=$(mktemp -d)
+trap 'rm -rf $tmpdir' EXIT
+
 function usage() {
     echo "Usage: $0 [-s <45|90>] [-p <string>]" 2>&2
     exit 1
@@ -49,7 +52,6 @@ fi
 
 # Create a preinstall environment that matches the one built into the base
 # image. This allows multiple versions of the base image.
-tmpdir=$(mktemp -d)
 build_preinstall "$tmpdir/preinstall"
 pushd "$tmpdir"
 tag=$(hash_dir preinstall)
