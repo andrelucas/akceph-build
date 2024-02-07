@@ -7,7 +7,7 @@ tmpdir=$(mktemp -d)
 trap 'rm -rf $tmpdir' EXIT
 
 function usage() {
-    echo "Usage: $0 [-s <45|90>] [-p <string>]" 2>&2
+    echo "Usage: $0 [-i]" 2>&2
     exit 1
 }
 
