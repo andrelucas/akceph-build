@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPTDIR="$(dirname "$0")"
+SCRIPTDIR="$(realpath "$(dirname "$0")")"
 
 set -e
 # shellcheck source=vars.sh.example
@@ -11,7 +11,8 @@ source "$SCRIPTDIR/lib.sh"
 # don't stomp on each other. If this is irksome, have multiple working copies.
 (
     flock -n 9 || (echo "Another build is in progress" && exit 1)
-    build_preinstall "$PWD"/preinstall
+    PRE_DIR="$SCRIPTDIR/preinstall"
+    build_preinstall "$PRE_DIR"
     pushd "$(dirname "$PRE_DIR")"
     tag=$(hash_dir "$(basename "$PRE_DIR")")
     echo "Build: Preinstall image tag: $tag"

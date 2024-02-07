@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPTDIR="$(dirname "$0")"
+SCRIPTDIR="$(realpath "$(dirname "$0")")"
 
 set -e
 # shellcheck source=vars.sh.example
@@ -17,8 +17,7 @@ function usage() {
 
 interactive=0
 
-declare -a runcmd runopt
-runopt=()
+declare -a runopt
 runopt=()
 
 while getopts "io:" o; do
@@ -70,4 +69,4 @@ $DOCKER run --rm \
     -v "$TOOLS_SRC":"$C_TOOLS" \
     -v "$CCACHE_DIR":"$C_CCACHE" \
     -e "CCACHE_DIR=$C_CCACHE" \
-    "${runopt[@]}" "$IMAGENAME:$tag" "${runcmd[@]}"
+    "${runopt[@]}" "$IMAGENAME:$tag" "$@"
