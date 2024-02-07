@@ -62,7 +62,9 @@ function srcbuild() {
 }
 
 function debbuild() {
-    ./make-debs.sh
+    sudo apt-get install -y debhelper
+    # XXX quicker hack
+    env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage --build=binary -uc -us
 }
 
 if [[ $debbuild -eq 1 ]]; then
