@@ -10,15 +10,15 @@ releasetype=RelWithDebInfo
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "c:r:" o; do
+while getopts "c:t:" o; do
     case "${o}" in
-        r)
-            releasetype=$OPTARG
-            echo "Setting release type '$releasetype'"
+        t)
+            BUILD_TYPE=$OPTARG
+            echo "Setting build type '$BUILD_TYPE'"
             ;;
         c)
             # shellcheck disable=SC2206
-            cmake_opts+=($OPTARG)
+            cmake_opts+=("$OPTARG")
             ;;
         *)
             usage
@@ -35,9 +35,6 @@ cd /src
 git config --global --add safe.directory "*"
 
 export NINJA_STATUS="[%p :: t=%t/f=%f/r=%r :: %e] "
-
-BUILD_TYPE="${BUILD_TYPE:-Debug}"
-export BUILD_TYPE
 
 BUILD_NPROC="${BUILD_NPROC:-$(nproc)}"
 export BUILD_NPROC
