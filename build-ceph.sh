@@ -1,7 +1,11 @@
 #!/bin/bash
 
 SCRIPTDIR="$(dirname "$0")"
-source "$SCRIPTDIR/vars.sh" || exit 1
+
+set -e
+# shellcheck source=vars.sh.example
+source "$SCRIPTDIR/vars.sh"
+source "$SCRIPTDIR/lib.sh"
 
 tmpdir=$(mktemp -d)
 trap 'rm -rf $tmpdir' EXIT

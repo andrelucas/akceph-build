@@ -1,2 +1,5 @@
 /preinstall
 /preinstall.lock
+
+# This is your local configuration. Start by copying vars.sh.example.
+vars.sh

@@ -1,9 +1,11 @@
 #!/bin/bash
 
 SCRIPTDIR="$(dirname "$0")"
-source "$SCRIPTDIR/vars.sh" || exit 1
 
 set -e
+# shellcheck source=vars.sh.example
+source "$SCRIPTDIR/vars.sh"
+source "$SCRIPTDIR/lib.sh"
 
 # Run this inside a flock(1) so concurent builds out of the same working copy
 # don't stomp on each other. If this is irksome, have multiple working copies.
