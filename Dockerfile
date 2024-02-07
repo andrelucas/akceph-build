@@ -23,7 +23,7 @@ COPY preinstall ${PRE_DIR}
 WORKDIR ${PRE_DIR}
 RUN ./install-deps.sh
 
-ARG CCACHE_LINKS="cc c++ gcc g++ clang clang++"
+ARG CCACHE_LINKS="cc c++ gcc g++ gcc-11 g++-11 clang clang++"
 RUN for p in ${CCACHE_LINKS}; do ln -s /usr/local/bin/ccache /usr/local/bin/$p; done
 ENV CCACHE_DIR=/ccache
 
