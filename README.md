@@ -1,8 +1,27 @@
 # README for akceph-build
 
-This is a simple Dockerised Ceph build.
+<!-- vscode-markdown-toc -->
+* [tl;dr](#tldr)
+* [Overview](#Overview)
+	* [Build image](#Buildimage)
+	* [Build script.](#Buildscript.)
+* [Miscellanea](#Miscellanea)
+	* [Why is it in a separate directory to the Ceph source?](#WhyisitinaseparatedirectorytotheCephsource)
 
-## tl;dr
+<!-- vscode-markdown-toc-config
+	numbering=false
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
+generated binaries suitable for running on systems we have, natively or in a
+container.
+
+A separate repository based on upstream code will build final containers for
+use external to the development team. This is a developer tool.
+
+## <a name='tldr'></a>tl;dr
 
 ```sh
 
@@ -10,13 +29,16 @@ This is a simple Dockerised Ceph build.
 $ cp vars.sh.example vars.sh
 $ vim vars.sh  # Make this match reality.
 
-# Build from source into Linux binaries in BUILDDIR/bin.
+# Build from source into Linux binaries in BUILDDIR/bin. This is create for
+# unit tests and vstart.sh clusters.
 $ ./build-ceph.sh
 
-# Build Debian packages using `make-debs.sh` (v17).
+# Build Debian packages using `make-debs.sh` (v17). This will *torch*
+# anything not in git inside your working copy - beware!
 $ ./build-ceph.sh -- -D
 
-# Build Debian packages using `dpkg-buildpackage` (v18).
+# Build Debian packages using `dpkg-buildpackage` (v18). This too may wreak
+# havoc in your working copy, be careful.
 $ ./build-ceph.sh -- -d
 
 # Just construct the build image. Note this will be customised to your
@@ -27,7 +49,13 @@ $ ./build-container.sh
 # ready to build.
 $ ./build-ceph.sh -i
 
-## Once inside the build image...
+## Once inside the build image by using '-i'...
+
+# Run normal commands.
+root@eb10eda81490:/src# cd /src/build.Debug
+root@eb10eda81490:/src# ninja
+# Once you've build things, you can run vstart.sh on the outputs
+
 
 # Build fully.
 root@eb10eda81490:/src# /tools/source-build.sh
@@ -56,14 +84,14 @@ $ ./build-ceph.sh -- -DWITH_ASAN=ON
 
 ```
 
-## Overview
+## <a name='Overview'></a>Overview
 
 This is designed to be a mltiuser build image that can be run by multiple
 users simultaneously without problems, so long as the users are using separate
 working copies. (It won't work if you do multiple builds from the same
 checked-out source - sorry.)
 
-### Build image
+### <a name='Buildimage'></a>Build image
 
 The build image consists of a bootstrap build environment for Ceph. It is
 based on Ubuntu 20.04, and it installs basic tools before calling out to
@@ -82,7 +110,7 @@ an incremental build cycle it would be an intolerable nuisance.
 
 The build image is configured to run a source build script by default.
 
-### Build script.
+### <a name='Buildscript.'></a>Build script.
 
 The build script takes a few command line options, but essentially runs either
 a source build (`./do-cmake.sh && ... && ninja`) or a Debian build
@@ -92,4 +120,24 @@ By design the script is opinionated in how it builds. However, you can pass as
 many `-c` options (to specify CMake options) to the build script as you like,
 as shown in the examples above.
 
-XXX more
+## <a name='Miscellanea'></a>Miscellanea
+
+### What's this for?
+
+This is to help Ceph developers. It builds consistently and automatically
+(with good ccache support) into binaries and into Debian packages.
+
+The aim is that the build machine or one's own machines can be used to build
+consistent images. In particular, it needs to be possible to have multiple
+builds of multiple versions of Ceph in flight at the same time.
+
+A separate tool will be made for building 'final' container images for user
+consumption.
+
+### <a name='WhyisitinaseparatedirectorytotheCephsource'></a>Why is it in a separate directory to the Ceph source?
+
+Largely because running a Debian build will obliterate anything that isn't
+committed to git in the working copy. This is the voice of experience; you are
+looking at the second version of this tool.
+
+
