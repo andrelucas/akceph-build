@@ -51,6 +51,12 @@ export NINJA_STATUS="[%p :: t=%t/f=%f/r=%r :: %e] "
 BUILD_NPROC="${BUILD_NPROC:-$(nproc)}"
 export BUILD_NPROC
 
+# These are required for Ceph 18, but they make sense for Ceph 17 too.
+CCLINKPATH=/usr/local/bin  # These are the CMake symlinks.
+CC=$CCLINKPATH/gcc-11
+CXX=$CCLINKPATH/g++-11
+export CC CXX
+
 function old_debbuild() {
     sudo apt-get install -y reprepro
     # The first parameter is the base directory for the built images (it
