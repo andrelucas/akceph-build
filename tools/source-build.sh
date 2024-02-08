@@ -48,6 +48,7 @@ BUILD_NPROC="${BUILD_NPROC:-$(nproc)}"
 export BUILD_NPROC
 
 function old_debbuild() {
+    sudo apt-get install -y reprepro
     env DEB_BUILD_OPTIONS="parallel=$(nproc)" ./make-debs.sh "$@"
 }
 
