@@ -7,13 +7,14 @@ RUN apt-get update && apt-get install -y \
 	git \
 	jq \
 	ninja-build \
+	pkg-config \
 	sudo
 
 ARG CMAKE_VERSION=v4.9.1
 RUN cd /tmp && git clone https://github.com/ccache/ccache.git && cd ccache && \
 	git checkout -b ${CMAKE_VERSION} tags/${CMAKE_VERSION} && \
 	mkdir build && cd build && \
-	cmake -DCMAKE_BUILD_TYPE=Release -GNinja .. && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=OFF -DENABLE_DOCUMENTATION=OFF -GNinja .. && \
 	ninja install && \
 	cd /tmp && rm -rf ccache
 

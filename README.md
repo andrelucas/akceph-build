@@ -18,6 +18,10 @@ This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
 generated binaries suitable for running on systems we have, natively or in a
 container.
 
+Note this doesn't work with Podman at the moment. It needs real Docker. With
+Podman a lot more care is required with permissions for mounted directories,
+and since Akamai is an Ubuntu house there's no clear incentive.
+
 A separate repository based on upstream code will build final containers for
 use external to the development team. This is a developer tool.
 
