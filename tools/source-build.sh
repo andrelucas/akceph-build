@@ -59,14 +59,20 @@ export CC CXX
 
 function old_debbuild() {
     sudo apt-get install -y reprepro
+    # The debian build switches to CMake, so we have to be careful how much
+    # parallelism we ask for.
+    NPROC=$(($(nproc) / 2))
     # The first parameter is the base directory for the built images (it
     # defaults to /tmp/release).
-    env DEB_BUILD_OPTIONS="parallel=$(nproc)" ./make-debs.sh /release "$@"
+    env DEB_BUILD_OPTIONS="parallel=$NPROC" ./make-debs.sh /release "$@"
 }
 
 function debbuild() {
     sudo apt-get install -y debhelper
-    env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage -uc -us "$@"
+    # The debian build switches to CMake, so we have to be careful how much
+    # parallelism we ask for.
+    NPROC=$(($(nproc) / 2))
+    env DEB_BUILD_OPTIONS="parallel=$NPROC" dpkg-buildpackage -uc -us "$@"
 }
 
 function configure() {
