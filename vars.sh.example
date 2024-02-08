@@ -1,14 +1,24 @@
 # shellcheck shell=bash
 
+##
+## These variables might legitimately be changed by the user.
+##
 export CCACHE_DIR=$HOME/.ccache
 # Make CCACHE_CONF under CCACHE_DIR or you'll confuse matters.
 export CCACHE_CONF=$CCACHE_DIR/ccache.conf
 export CEPH_SRC=~/git/ceph
+export RELEASE_DIR=$PWD/release
+
+##
+## You probably shouldn't change these.
+##
 export DOCKER=docker
 export IMAGENAME=cbuild
-export RELEASE_DIR=$PWD/release
+# This is where Debian packages will be found after a Debian build.
 export TOOLS_SRC=$PWD/tools
 
+# Paths inside the container. These don't magically change with these
+# variables, they're hardcoded into the container image.
 export C_CCACHE=/ccache
 export C_RELEASE=/release
 export C_SRC=/src

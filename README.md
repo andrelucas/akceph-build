@@ -45,6 +45,9 @@ $ ./build-ceph.sh -- -D
 # havoc in your working copy, be careful.
 $ ./build-ceph.sh -- -d
 
+# Run the unit tests.
+$ ./build-ceph.sh -- -t
+
 # Just construct the build image. Note this will be customised to your
 # source tree, as defined in vars.sh.
 $ ./build-container.sh
@@ -65,7 +68,7 @@ root@eb10eda81490:/src# ninja
 root@eb10eda81490:/src# /tools/source-build.sh
 
 # Build for debug (default is RelWithDebInfo).
-root@eb10eda81490:/src# /tools/source-build.sh -t Debug
+root@eb10eda81490:/src# /tools/source-build.sh -b Debug
 # Build with ASAN enabled.
 root@eb10eda81490:/src# /tools/source-build.sh -c -DWITH_ASAN=ON
 # Build with make(1) instead of Ninja. (Notice the quotes.)
@@ -80,7 +83,7 @@ root@eb10eda81490:/src# /tools/source-build.sh \
 # (source-build.sh by default) directly, by adding options to
 # the entrypoint script after '--' on the build-ceph.sh command
 # line:
-$ ./build-ceph.sh -- -t Debug
+$ ./build-ceph.sh -- -b Debug
 
 # Or:
 

@@ -20,7 +20,7 @@ interactive=0
 declare -a runopt
 runopt=()
 
-while getopts "io:" o; do
+while getopts "io:r" o; do
     case "${o}" in
         i)
             interactive=1
@@ -28,6 +28,9 @@ while getopts "io:" o; do
         o)
             # shellcheck disable=SC2206
             runopt+=($OPTARG)
+            ;;
+        r)
+            runopt+=(--rm)
             ;;
         *)
             usage
@@ -62,7 +65,7 @@ echo "Run: Preinstall image tag: $tag"
 popd
 
 set -e -x
-$DOCKER run --rm \
+$DOCKER run \
     -v "/etc/passwd:/etc/passwd:ro" \
     -v "/etc/group:/etc/group:ro" \
     -v "$CCACHE_DIR":"$C_CCACHE" \

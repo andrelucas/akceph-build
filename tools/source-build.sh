@@ -8,12 +8,17 @@ function usage() {
 debbuild=0
 old_debbuild=0
 releasetype=RelWithDebInfo
+run_unittests=0
 
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "c:dDt:" o; do
+while getopts "c:dDb:t" o; do
     case "${o}" in
+        b)
+            BUILD_TYPE=$OPTARG
+            echo "Setting build type '$BUILD_TYPE'"
+            ;;
         c)
             # shellcheck disable=SC2206
             cmake_opts+=("$OPTARG")
@@ -25,8 +30,7 @@ while getopts "c:dDt:" o; do
             old_debbuild=1
             ;;
         t)
-            BUILD_TYPE=$OPTARG
-            echo "Setting build type '$BUILD_TYPE'"
+            run_unittests=1
             ;;
         *)
             usage
@@ -59,7 +63,7 @@ function debbuild() {
     env DEB_BUILD_OPTIONS="parallel=$(nproc)" dpkg-buildpackage -uc -us "$@"
 }
 
-function srcbuild() {
+function configure() {
     export BUILD_DIR=build.$BUILD_TYPE
 
     rm -rf "$BUILD_DIR"
@@ -72,12 +76,22 @@ function srcbuild() {
         -DWITH_CCACHE=ON \
         "${cmake_opts[@]}"
     cd "$BUILD_DIR"
+}
 
+function srcbuild() {
+    configure
     # Run Ninja with whatever parameters are passed to this script.
     ninja "$@"
 }
 
-if [[ $old_debbuild -eq 1 ]]; then
+function unittest() {
+    configure
+    ninja tests && ctest -j "$BUILD_NPROC" --output-on-failure "$@"
+}
+
+if [[ $run_unittests -eq 1 ]]; then
+    unittest "$@"
+elif [[ $old_debbuild -eq 1 ]]; then
     old_debbuild "$@"
 elif [[ $debbuild -eq 1 ]]; then
     debbuild "$@"
