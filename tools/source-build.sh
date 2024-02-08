@@ -49,7 +49,9 @@ export BUILD_NPROC
 
 function old_debbuild() {
     sudo apt-get install -y reprepro
-    env DEB_BUILD_OPTIONS="parallel=$(nproc)" ./make-debs.sh "$@"
+    # The first parameter is the base directory for the built images (it
+    # defaults to /tmp/release).
+    env DEB_BUILD_OPTIONS="parallel=$(nproc)" ./make-debs.sh /release "$@"
 }
 
 function debbuild() {

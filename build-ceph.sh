@@ -65,8 +65,9 @@ set -e -x
 $DOCKER run --rm \
     -v "/etc/passwd:/etc/passwd:ro" \
     -v "/etc/group:/etc/group:ro" \
-    -v "$CEPH_SRC":"$C_SRC" \
-    -v "$TOOLS_SRC":"$C_TOOLS" \
     -v "$CCACHE_DIR":"$C_CCACHE" \
+    -v "$CEPH_SRC":"$C_SRC" \
+    -v "$RELEASE_DIR":"$C_RELEASE" \
+    -v "$TOOLS_SRC":"$C_TOOLS" \
     -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" "$IMAGENAME:$tag" "$@"
