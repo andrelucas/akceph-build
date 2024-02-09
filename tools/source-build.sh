@@ -76,6 +76,11 @@ while getopts "Ab:c:CdDEhj:nO:Rt" o; do
             ;;
         C)
             with_ccache=0
+            # It's not enough to say WITH_CCACHE=OFF, do_cmake.sh detects the
+            # binary. We're in a container, so just move it aside!
+            if [[ -x /usr/local/bin/ccache ]]; then
+                mv /usr/local/bin/ccache /usr/local/bin/ccache.disabled
+            fi
             ;;
         c)
             # shellcheck disable=SC2206
