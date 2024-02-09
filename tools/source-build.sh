@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Ceph build metascript. Runs *inside* the container.
+
+## This is the architecture flag we set unless explicitly disabled.
+FLAG_M_ARCH="-march=znver2"
+
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 
 function usage() {
@@ -7,6 +12,9 @@ function usage() {
 Usage: $0 [-b CMAKEBUILDTYPE] [-c CMAKEOPTION [...]] [-C] [-d|-D|-t] [-E] [-j NPROC] [-n] [-O DEB_BUILD_OPTIONS] [NINJA_TARGET...]
 
 Where
+    -A
+        Do not set -march, let the compiler decide the architecture. This will
+        result in slower generated code.
     -b CMAKEBUILDTYPE
         Set the CMake build type (default: RelWithDebInfo).
     -c CMAKEOPTION
@@ -30,6 +38,9 @@ Where
         for Debian package builds.
     -O DEB_BUILD_OPTIONS
         Pass options to the Debian build system.
+    -R
+        Normally we patch RocksDB to disable PORTABLE build mode. This option leaves it
+        as-is.
     -t
         Run the unit tests.
     NINJA_TARGET
@@ -40,11 +51,13 @@ EOF
     exit 1
 }
 
+arch_set=1
 BUILD_TYPE=RelWithDebInfo
 deb_build_options=""
 debbuild=0
 nobuild=0
 old_debbuild=0
+rocksdb_portable=0
 run_unittests=0
 nproc_overridden=0
 with_ccache=1
@@ -52,8 +65,11 @@ with_ccache=1
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "b:c:CdDEhj:nO:t" o; do
+while getopts "Ab:c:CdDEhj:nO:Rt" o; do
     case "${o}" in
+        A)
+            arch_set=0
+            ;;
         b)
             BUILD_TYPE=$OPTARG
             echo "Setting build type '$BUILD_TYPE'"
@@ -91,6 +107,9 @@ while getopts "b:c:CdDEhj:nO:t" o; do
         O)
             deb_build_options="$OPTARG"
             ;;
+        R)
+            rocksdb_portable=1
+            ;;
         t)
             run_unittests=1
             ;;
@@ -123,6 +142,20 @@ if [[ -f /usr/local/bin/gcc-11 ]]; then
     CC=$CCLINKPATH/gcc-11
     CXX=$CCLINKPATH/g++-11
     export CC CXX
+fi
+
+if [[ $arch_set -eq 1 ]]; then
+    # Set the architecture to znver2. See
+    # https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html but note that we're
+    # running an old GCC.
+    echo "Setting architecture flag $FLAG_M_ARCH"
+    export CFLAGS="$FLAG_M_ARCH"
+    export CXXFLAGS="$FLAG_M_ARCH"
+fi
+
+if [[ $rocksdb_portable -eq 0 ]]; then
+    # Patch RocksDB to disable PORTABLE build mode.
+    sed -i -e 's/\(rocksdb_CMAKE_ARGS -DPORTABLE=\)ON/\1OFF/' /src/cmake/modules/BuildRocksDB.cmake
 fi
 
 # Pull in the envfile if requested. This is completely unsafe; the envfile
