@@ -217,7 +217,7 @@ function srcbuild() {
         echo "Build skipped"
     else
         # Run Ninja with whatever parameters are passed to this script.
-        ninja "$@"
+        ninja -j"$BUILD_NPROC" "$@"
     fi
 }
 
