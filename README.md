@@ -37,13 +37,63 @@ $ vim vars.sh  # Make this match reality.
 # unit tests and vstart.sh clusters.
 $ ./build-ceph.sh
 
-# Build Debian packages using `make-debs.sh` (v17). This will *torch*
+# Get command help.
+$ ./build-ceph.sh -- -h
+
+... lots of Docker stuff ...
+
+~/git/akceph-build
+Usage: /tools/source-build.sh [-b CMAKEBUILDTYPE] [-c CMAKEOPTION [...]] [-C] [-d|-D|-t] [-E] [-j NPROC] [-n] [-O DEB_BUILD_OPTIONS] [NINJA_TARGET...]
+
+Where
+    -b CMAKEBUILDTYPE
+        Set the CMake build type (default: RelWithDebInfo).
+    -c CMAKEOPTION
+        Pass a CMake option to the build, e.g. -DWITH_ASAN=ON, "-GUnix Makefiles".
+    -C
+        Disable use of ccache. This has a brutal build-time penalty.
+    -d
+        Build a Debian package using raw dpkg-buildpackage.
+    -D
+        Build Debian packages using SRC/make-deps.sh
+    -E
+        Use the file in the script directory to configure the environment
+        for the build. Keep the file simple, and use it sparingly.
+    -h
+        Show this help message.
+    -j NPROC
+        Override the number of processors to use for the build. Default is half the
+        value returned by nproc(1).
+    -n
+        Do not build, just configure. Only useful for source and unit test builds, not
+        for Debian package builds.
+    -O DEB_BUILD_OPTIONS
+        Pass options to the Debian build system.
+    -t
+        Run the unit tests.
+    NINJA_TARGET
+        The target to build with Ninja (if run without -d, -D or -t), e.g. radosgwd to
+        build just RGW.
+
+
+# Build Debian packages using `make-debs.sh`. This will *torch*
 # anything not in git inside your working copy - beware!
+# Outputs go to release/ (relative to your akceph-build working copy) in
+# the host.
 $ ./build-ceph.sh -- -D
 
-# Build Debian packages using `dpkg-buildpackage` (v18). This too may wreak
+# Build Debian packages using `dpkg-buildpackage`. This too may wreak
 # havoc in your working copy, be careful.
 $ ./build-ceph.sh -- -d
+#  '-d' is sometimes more helpful than -D because you can add extra
+# options that will be passed to dpkg-buildpackage(1), which can drastically
+# shorten build time. E.g.
+$ ./build-ceph.sh -- -d --build=binary
+
+# Both debian builds take the -o option to set DEB_BUILD_OPTIONS.
+$ ./build-ceph.sh -- -d -O "nostrip"
+# Of course these can be combined.
+$ ./build-ceph.sh -- -d -O "nostrip" --build-binary
 
 # Run the unit tests.
 $ ./build-ceph.sh -- -t
@@ -51,6 +101,8 @@ $ ./build-ceph.sh -- -t
 # Just construct the build image. Note this will be customised to your
 # source tree, as defined in vars.sh.
 $ ./build-container.sh
+
+## Interactive building.
 
 # Get an interactive shell on the build image, with everything mounted
 # ready to build.
@@ -121,11 +173,20 @@ The build image is configured to run a source build script by default.
 
 The build script takes a few command line options, but essentially runs either
 a source build (`./do-cmake.sh && ... && ninja`) or a Debian build
-(`./make-debs.sh`).
+(`./make-debs.sh` or `dpkg-buildpackage`).
 
 By design the script is opinionated in how it builds. However, you can pass as
 many `-c` options (to specify CMake options) to the build script as you like,
 as shown in the examples above.
+
+#### Power options
+
+You can tweak how dpkg-buildpackage operates by using the `-O` option to
+set `DEB_BUILD_OPTIONS`. If you don't know what this does, don't use it.
+
+More powerfully still, you can pass in arbitrary environment variables via
+file `tools/env`. These can make substantial differences to the output, and if
+you try you can totally break things, so use this sparingly.
 
 ## <a name='Miscellanea'></a>Miscellanea
 

@@ -17,10 +17,11 @@ function usage() {
 
 interactive=0
 
-declare -a runopt
+declare -a bcopt runopt
+bcopt=()
 runopt=()
 
-while getopts "io:r" o; do
+while getopts "io:rR" o; do
     case "${o}" in
         i)
             interactive=1
@@ -31,6 +32,9 @@ while getopts "io:r" o; do
             ;;
         r)
             runopt+=(--rm)
+            ;;
+        R)
+            bcopt+=(-R)
             ;;
         *)
             usage
@@ -46,7 +50,7 @@ fi
 runopt+=(-it) # Always interactive - we want to be able to Ctrl-C.
 
 # Rely on Docker and this script to not rebuild from scratch.
-./build-container.sh
+./build-container.sh "${bcopt[@]}"
 
 # Make sure the ccache configuration is sane.
 if [[ ! -d $CCACHE_DIR ]]; then
@@ -64,7 +68,7 @@ tag=$(hash_dir preinstall)
 echo "Run: Preinstall image tag: $tag"
 popd
 
-set -e -x
+set -e
 $DOCKER run \
     -v "/etc/passwd:/etc/passwd:ro" \
     -v "/etc/group:/etc/group:ro" \
