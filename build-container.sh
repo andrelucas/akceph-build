@@ -23,6 +23,7 @@ done
 shift $((OPTIND-1))
 
 set -e
+
 # shellcheck source=vars.sh.example
 source "$SCRIPTDIR/vars.sh"
 source "$SCRIPTDIR/lib.sh"

@@ -1,22 +1,37 @@
 FROM ubuntu:20.04
 
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
+# Install the base system, plus everything we'll need to build our custom
+# dependencies.
+# - ccache: libzstd-dev
+# - abseil: nothing
+# - grpc: libssl-dev (may change later), zlib1g-dev
+# - openssl3: nothing
+#
+RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	build-essential \
 	cmake \
 	git \
 	jq \
+	libssl-dev \
+	libzstd-dev \
 	ninja-build \
 	pkg-config \
-	sudo
+	sudo \
+	zlib1g-dev
 
-ARG CMAKE_VERSION=v4.9.1
-RUN cd /tmp && git clone https://github.com/ccache/ccache.git && cd ccache && \
-	git checkout -b ${CMAKE_VERSION} tags/${CMAKE_VERSION} && \
-	mkdir build && cd build && \
-	cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=OFF -DENABLE_DOCUMENTATION=OFF -GNinja .. && \
-	ninja install && \
-	cd /tmp && rm -rf ccache
+## Populate /build inside the container. These scripts will build custom
+## dependencies.
+RUN mkdir -p /build
+COPY build/ /build/
+WORKDIR /build
+RUN ./ccache.sh
+RUN ./abseil.sh
+RUN ./openssl3.sh
+RUN ./grpc.sh
+
+## Unset compiler variables after building custom dependencies.
+ENV CC= CFLAGS=
+ENV CXX= CXXFLAGS=
 
 ARG PRE_DIR=/tmp/preinstall
 RUN mkdir -p ${PRE_DIR} ${PRE_DIR}/debian
