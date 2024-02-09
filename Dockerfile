@@ -28,7 +28,7 @@ ARG CCACHE_LINKS="cc c++ gcc g++ clang clang++"
 RUN for p in ${CCACHE_LINKS}; do ln -s /usr/local/bin/ccache /usr/local/bin/$p; done
 # If install-deps.sh installed gcc-11 and g++-11, then link them to ccache as
 # well. (These are only installed for Ceph >= 18.)
-RUN if [ -f /usr/bin/g++-11 ]; then for p in "gcc-11 g++-11"; do ln -s /usr/local/bin/ccache /usr/local/bin/$p; done; fi
+RUN if [ -f /usr/bin/g++-11 ]; then for p in gcc-11 g++-11; do ln -s /usr/local/bin/ccache /usr/local/bin/$p; done; fi
 ENV CCACHE_DIR=/ccache
 
 ARG TOOLS_DIR=/tools
