@@ -11,7 +11,22 @@ tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
 trap 'rm -rf $tmpdir' EXIT
 
 function usage() {
-    echo "Usage: $0 [-i]" 2>&2
+    cat >&2 <<EOF
+Usage: $0 [-irR] [-o RUNOPT] [--] [OPTIONS-TO-BUILD-SCRIPT]
+Where:
+    -i
+        Start an interactive shell in the container.
+    -o
+        Pass additional options to 'docker run'.
+    -r
+        Remove the container after the run. Saves space, but might delete work.
+    -R
+        Pass options to build-container.sh
+
+Anything after '--' is passed to the build script run in the container, which by
+default is tools/source-build.sh.
+
+EOF
     exit 1
 }
 
