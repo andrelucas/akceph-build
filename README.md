@@ -2,12 +2,17 @@
 
 <!-- vscode-markdown-toc -->
 * [tl;dr](#tldr)
+* [Recommended use](#Recommendeduse)
 * [Overview](#Overview)
 	* [Build image](#Buildimage)
-		* [`install-deps.sh` and multiple versions](#install-deps.shandmultipleversions)
+		* [Container builds for the uninitiated](#Containerbuildsfortheuninitiated)
 		* [Binary dependency compilation and install](#Binarydependencycompilationandinstall)
-	* [Build script.](#Buildscript.)
+		* [`install-deps.sh` and multiple versions](#install-deps.shandmultipleversions)
+		* [`install-deps.sh` speed hack](#install-deps.shspeedhack)
+	* [`build-ceph.sh` - the build script.](#build-ceph.sh-thebuildscript.)
 		* [Power options](#Poweroptions)
+	* [`build-container.sh` - the container builder](#build-container.sh-thecontainerbuilder)
+	* [`source-build.sh` - the Ceph builder script inside the container](#source-build.sh-theCephbuilderscriptinsidethecontainer)
 * [Miscellanea](#Miscellanea)
 	* [What's this for?](#Whatsthisfor)
 	* [Why is it in a separate directory to the Ceph source?](#WhyisitinaseparatedirectorytotheCephsource)
@@ -20,7 +25,7 @@
 
 This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
 generated binaries suitable for running on systems we have, natively or in a
-container.
+container. It also builds standard Debian containers.
 
 Note this doesn't work with Podman at the moment. It needs real Docker. With
 Podman a lot more care is required with permissions for mounted directories,
@@ -147,7 +152,7 @@ $ ./build-ceph.sh -- -DWITH_ASAN=ON
 
 ```
 
-## Recommended use
+## <a name='Recommendeduse'></a>Recommended use
 
 For **development**, I recommend running in interactive mode (`./build-ceph.sh
 -i`). You can run whatever CMake you like that way.
@@ -183,20 +188,45 @@ based on Ubuntu 20.04, and it installs basic tools and custom binary
 dependencies before calling out to `install-deps.sh` from the Ceph source to
 bring everything it needs in.
 
-#### <a name='install-deps.shandmultipleversions'></a>`install-deps.sh` and multiple versions
+#### <a name='Containerbuildsfortheuninitiated'></a>Container builds for the uninitiated
 
-`install-deps.sh` varies from release to release and we have to have the
-appropriate version in the build image.. My solution is to checksum everything
-from the source that we need, and use that checksum as the tag to the Docker
-build image. Then, when the builder goes to compile the source, it constructs
-the same checksum and selects the appropriate Docker image.
+A few notes for anyone not used to building in Docker containers.
 
-This way, if we have two builds with different versions of Ceph, the build
-scripts will automatically select the correct image, with `install-deps.sh`
-pre-run. This is significant; the deps installer script is very slow, and for
-an incremental build cycle it would be an intolerable nuisance.
+It's important to know the difference between the build image and the
+build container. The build image is a pre-built set of commands and
+configuration layers used to save time when starting a container. The build
+image is constructed using a `Dockerfile` and is configued by the
+`build-container.sh` script. This is run automatically by `build-ceph.sh` so
+unless you're working on the build image you don't normally need to run it yourself.
 
-The build image is configured to run a source build script by default.
+The image build process is aggressively cached by Docker, so if there are no
+changes the image build is really quick and can be safely run every time.
+However, knowing what constitutes a 'change' in this context can be subtle; we'll speak more of this later.
+
+A container is where actual Ceph builds are performed. It's the job of the
+build image to cache as much up-front work as we can, so repeated builds can
+be started as quickly as possible, but each time with a clean OS environment
+regardless of the host you're running on. This is what makes container builds
+so useful - they allow every user to have identical build environments
+everywhere they're used, with very little effort.
+
+The build image installs a basic OS environment, builds from source some
+things we need, and then runs Ceph's _very_ slow `install-deps.sh` script in
+the build image so we don't have to do it every time. Note that the build
+image can't mount volumes from the host, and by design doesn't (without extra
+effort) inherit environment variables etc. from the caller.
+
+The container starts where the build image ends. In this environment, the
+container mounts some volumes (including the ccache directory and the Ceph
+source working copy), then by default runs a build script that knows how to
+build Ceph itself. Every time you run the container you get a fresh start. This might confuse initially but actually is a real benefit once you're
+used to it.
+
+Note, however, that we're mounting the source code into the container, so
+anything you change in the source tree you mount in will persist after the
+container has stopped. For example, a Debian build will *wipe* any deviations
+from the working copy as seen by Git. Commit your changes before doing a
+Debian build!
 
 #### <a name='Binarydependencycompilationandinstall'></a>Binary dependency compilation and install
 
@@ -213,7 +243,42 @@ These are scripts that can do anything in the build environment. If we at some
 point decide to use e.g. Artifactory for the binaries for these things, the
 scripts can use the cli tools to pull them into the build image here.
 
-### <a name='Buildscript.'></a>Build script.
+#### <a name='install-deps.shandmultipleversions'></a>`install-deps.sh` and multiple versions
+
+`install-deps.sh` varies from release to release and we have to have the
+appropriate version in the build image. My solution is to checksum everything
+from the source that we need, and use that checksum as the tag to the Docker
+build image. Then, when the builder goes to compile the source, it constructs
+the same checksum and selects the appropriate Docker image.
+
+This way, if we have two builds with different versions of Ceph, the build
+scripts will automatically select the correct image, with `install-deps.sh`
+pre-run. This is significant; the deps installer script is very slow, and for
+an incremental build cycle it would be an intolerable nuisance.
+
+The build image is configured to run a source build script by default.
+
+#### <a name='install-deps.shspeedhack'></a>`install-deps.sh` speed hack
+
+If you find yourself running the `install-deps.sh` script often, perhaps
+because you're working on the image itself, you can speed this up *a lot* by
+having an HTTP proxy and pointing it at that. The Debian packages are very
+cacheable and after a single normal speed run they will in future come at line
+speed from the local proxy. I configure this using `~/.docker/config.json`:
+
+```json
+{
+  "proxies": {
+    "default": {
+      "httpProxy": "http://proxy.mydomain.com:3128",
+      "httpsProxy": "http://proxy.mydomain.com:3128",
+      "noProxy": "*.mydomain.com,127.0.0.0/8"
+    }
+  }
+}
+```
+
+### <a name='build-ceph.sh-thebuildscript.'></a>`build-ceph.sh` - the build script.
 
 The build script takes a few command line options, but essentially runs either
 a source build (`./do-cmake.sh && ... && ninja`) or a Debian build
@@ -231,6 +296,26 @@ set `DEB_BUILD_OPTIONS`. If you don't know what this does, don't use it.
 More powerfully still, you can pass in arbitrary environment variables via
 file `tools/env`. These can make substantial differences to the output, and if
 you try you can totally break things, so use this sparingly.
+
+### <a name='build-container.sh-thecontainerbuilder'></a>`build-container.sh` - the container builder
+
+This is mostly a wrapper around `docker build`, with some subtleties described
+above with regard to running the proper version of `install-deps.sh`.
+
+### <a name='source-build.sh-theCephbuilderscriptinsidethecontainer'></a>`source-build.sh` - the Ceph builder script inside the container
+
+Most of the intelligence of the build is in `tools/source-build.sh`. This is
+run from *inside* the container. It's the default `ENTRYPOINT`, which means if
+you don't override it, Docker will run this script when a container is started
+via `docker run`, and any options passed on the command line will be passed
+through to the entrypoint.
+
+(The `-i` option to `build-ceph.sh` overrides the `ENTRYPOINT` to be
+`/bin/bash` so you can have an interactive shell instead of running the build
+script.)
+
+`source-build.sh` takes many options, but most are fairly niche. The `-h` help
+explains what each option does, and the examples above should help.
 
 ## <a name='Miscellanea'></a>Miscellanea
 
