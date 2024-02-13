@@ -4,8 +4,12 @@
 * [tl;dr](#tldr)
 * [Overview](#Overview)
 	* [Build image](#Buildimage)
+		* [`install-deps.sh` and multiple versions](#install-deps.shandmultipleversions)
+		* [Binary dependency compilation and install](#Binarydependencycompilationandinstall)
 	* [Build script.](#Buildscript.)
+		* [Power options](#Poweroptions)
 * [Miscellanea](#Miscellanea)
+	* [What's this for?](#Whatsthisfor)
 	* [Why is it in a separate directory to the Ceph source?](#WhyisitinaseparatedirectorytotheCephsource)
 
 <!-- vscode-markdown-toc-config
@@ -156,11 +160,13 @@ The build image consists of a bootstrap build environment for Ceph. It is
 based on Ubuntu 20.04, and it installs basic tools before calling out to
 `install-deps.sh` from the Ceph source to bring everything it needs in.
 
-This is subtle. `install-deps.sh` varies from release to release, so we have
-to be sensitive to this. My solution is to checksum everything from the source
-that we need, and use that checksum as the tag to the Docker build image.
-Then, when the builder goes to compile the source, it constructs the same
-checksum and selects the appropriate Docker image.
+#### <a name='install-deps.shandmultipleversions'></a>`install-deps.sh` and multiple versions
+
+`install-deps.sh` varies from release to release and we have to have the
+appropriate version in the build image.. My solution is to checksum everything
+from the source that we need, and use that checksum as the tag to the Docker
+build image. Then, when the builder goes to compile the source, it constructs
+the same checksum and selects the appropriate Docker image.
 
 This way, if we have two builds with different versions of Ceph, the build
 scripts will automatically select the correct image, with `install-deps.sh`
@@ -168,6 +174,21 @@ pre-run. This is significant; the deps installer script is very slow, and for
 an incremental build cycle it would be an intolerable nuisance.
 
 The build image is configured to run a source build script by default.
+
+#### <a name='Binarydependencycompilationandinstall'></a>Binary dependency compilation and install
+
+Scripts in `build/` are run to configure various dependencies. Most are
+configured via `config.env`.
+
+| Script | Tool | Used by | Notes |
+| - | - | - | -|
+| `ccache.sh` | ccache | | Compilation cache tool. |
+| `abseil.sh` | abseil-cpp | gRPC, OpenTelemetry | Google C++ utility library. |
+| `grpc.sh` | grpc | | Google gRPC C++ libraries and tools |
+
+These are scripts that can do anything in the build environment. If we at some
+point decide to use e.g. Artifactory for the binaries for these things, the
+scripts can use the cli tools to pull them into the build image here.
 
 ### <a name='Buildscript.'></a>Build script.
 
@@ -179,7 +200,7 @@ By design the script is opinionated in how it builds. However, you can pass as
 many `-c` options (to specify CMake options) to the build script as you like,
 as shown in the examples above.
 
-#### Power options
+#### <a name='Poweroptions'></a>Power options
 
 You can tweak how dpkg-buildpackage operates by using the `-O` option to
 set `DEB_BUILD_OPTIONS`. If you don't know what this does, don't use it.
@@ -190,7 +211,7 @@ you try you can totally break things, so use this sparingly.
 
 ## <a name='Miscellanea'></a>Miscellanea
 
-### What's this for?
+### <a name='Whatsthisfor'></a>What's this for?
 
 This is to help Ceph developers. It builds consistently and automatically
 (with good ccache support) into binaries and into Debian packages.
