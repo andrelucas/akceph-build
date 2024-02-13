@@ -29,8 +29,10 @@ mkdir -p build
 cd build
 env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
     cmake \
+    -DCMAKE_INSTALL_PREFIX=/usr/local/abseil-cpp \
     -DCMAKE_CXX_STANDARD="${CMAKE_CXX_STANDARD}" \
-    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_RELEASE_TYPE=RelWithDebInfo \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -GNinja \
     ..
 ninja install

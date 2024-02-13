@@ -13,12 +13,15 @@ if [[ $AKCEPH_ENABLE_OPENSSL3 != 1 ]]; then
     exit 0
 fi
 
+SSL_DIR=/usr/local/openssl3
+
 set -x
 cd "$tmpdir"
 git clone git://git.openssl.org/openssl.git
 cd openssl
 git checkout -b openssl-3.2.1 tags/openssl-3.2.1
 env CC="gcc" "CFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
-    ./Configure --prefix=/usr/local/openssl --openssldir=/usr/local/openssl
+    ./Configure --prefix="$SSL_DIR" --openssldir="$SSL_DIR" --libdir="$SSL_DIR/lib"
 make -j"$(( $(nproc)/2 ))"
-make install
+# install_sw doesn't build manpages.
+make install_sw

@@ -40,16 +40,17 @@ declare -a disable_plugins; disable_plugins=()
 for p in CSHARP NODE OBJECTIVE_C PHP PYTHON RUBY; do disable_plugins+=("-DgRPC_BUILD_GRPC_${p}_PLUGIN=OFF"); done
 
 env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
-    cmake \
-    -GNinja \
+    cmake -GNinja \
+    -DgRPC_INSTALL=ON \
     -DgRPC_ABSL_PROVIDER=package \
     -DgRPC_SSL_PROVIDER=package \
     -DgRPC_ZLIB_PROVIDER=package \
-    -DABSL_PROPAGATE_CXX_STD=ON \
-    -DBUILD_TESTING=OFF \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_CXX_STANDARD="${CMAKE_CXX_STANDARD}" \
-    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_INSTALL_PREFIX=/usr/local/grpc \
+    -DCMAKE_PREFIX_PATH=/usr/local/abseil-cpp/lib/cmake/absl \
     -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     "${disable_plugins[@]}" \
     ../..
 ninja install
