@@ -147,6 +147,28 @@ $ ./build-ceph.sh -- -DWITH_ASAN=ON
 
 ```
 
+## Recommended use
+
+For **development**, I recommend running in interactive mode (`./build-ceph.sh
+-i`). You can run whatever CMake you like that way.
+
+If you want the standard `do_cmake.sh` invocation, you can do `./build-ceph.sh
+-- -n -b Debug` which will stop before running ninja, and configure
+in Debug mode. Then you can run in interactive mode with `-i` and change to
+the build directory and build whatever you like - `ninja radosgwd` (`ninja
+radosgw` for Ceph 18) is a personal favourite.
+
+For **vstart.sh** runs, you can do the development build as above. However,
+I've not got `vstart.sh` running properly in the container yet. You can still
+run everything it builds in the host, though - you'll just have to do `export
+LD_LIBARY_PATH=<SRCDIR>/build.Debug/lib` (and probably have run
+`install-deps.sh` in the host) before this will work.
+
+For **standard builds**, do `./build-ceph -D`. This will, after some setup,
+run `make_debs.sh` and build Debian packages. Note that this will *trash*
+anything non-standard in your working copy! Commit (and ideally push) anything
+in your local working copy before doing this, or you'll lose it. I mean it.
+
 ## <a name='Overview'></a>Overview
 
 This is designed to be a mltiuser build image that can be run by multiple
@@ -157,8 +179,9 @@ checked-out source - sorry.)
 ### <a name='Buildimage'></a>Build image
 
 The build image consists of a bootstrap build environment for Ceph. It is
-based on Ubuntu 20.04, and it installs basic tools before calling out to
-`install-deps.sh` from the Ceph source to bring everything it needs in.
+based on Ubuntu 20.04, and it installs basic tools and custom binary
+dependencies before calling out to `install-deps.sh` from the Ceph source to
+bring everything it needs in.
 
 #### <a name='install-deps.shandmultipleversions'></a>`install-deps.sh` and multiple versions
 
