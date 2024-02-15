@@ -12,6 +12,11 @@ trap 'rm -rf $tmpdir' EXIT
 set -e
 source config.env
 
+if [[ $AKCEPH_ENABLE_CCACHE != 1 ]]; then
+    echo "AKCEPH_ENABLE_CCACHE is not 1, skipping ccache build"
+    exit 0
+fi
+
 if [[ -z $CCACHE_VERSION ]]; then
     CCACHE_VERSION=4.9.1
 fi

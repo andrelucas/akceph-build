@@ -10,6 +10,7 @@ FROM ubuntu:20.04
 RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	build-essential \
 	cmake \
+	curl \
 	git \
 	jq \
 	libssl-dev \
@@ -17,6 +18,7 @@ RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	ninja-build \
 	pkg-config \
 	sudo \
+	vim \
 	zlib1g-dev
 
 ## Populate /build inside the container. These scripts will build custom
@@ -24,7 +26,8 @@ RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 RUN mkdir -p /build
 COPY build/ /build/
 WORKDIR /build
-RUN ./ccache.sh
+RUN ./ccache-bin.sh
+RUN ./golang.sh
 RUN ./abseil.sh
 RUN ./openssl3.sh
 RUN ./grpc.sh
