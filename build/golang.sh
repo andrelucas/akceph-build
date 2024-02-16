@@ -30,4 +30,8 @@ echo "Unpacking to /usr/local/go"
 tar -C /usr/local -xzf "$DL"
 
 # Quick check.
-/usr/local/go/bin/go version
+gobin=/usr/local/go/bin/go
+$gobin version
+
+# Install tools.
+$gobin install github.com/bufbuild/buf/cmd/buf@v1.29.0
