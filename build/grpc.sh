@@ -51,7 +51,6 @@ env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DCMAKE_PREFIX_PATH=/usr/local/abseil-cpp/lib/cmake/absl \
     -DBUILD_SHARED_LIBS=OFF \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     "${disable_plugins[@]}" \
     ../..
 ninja install
