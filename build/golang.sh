@@ -34,4 +34,5 @@ gobin=/usr/local/go/bin/go
 $gobin version
 
 # Install tools.
+export GOBIN=/usr/local/bin  # Without this, they'll install to ~/go/bin.
 $gobin install github.com/bufbuild/buf/cmd/buf@v1.29.0
