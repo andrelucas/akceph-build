@@ -169,6 +169,7 @@ if [[ $use_envfile -eq 1 ]]; then
     echo "BEGIN environment import"
     cat "$SCRIPTDIR/env"
     echo "END environment import"
+    # shellcheck source=env.example
     source "$SCRIPTDIR/env"
 fi
 
