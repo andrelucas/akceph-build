@@ -53,5 +53,8 @@ ARG TOOLS_DIR=/tools
 RUN mkdir -p ${TOOLS_DIR}
 COPY tools ${TOOLS_DIR}
 
+# More informative Ninja status output by default.
+ENV NINJA_STATUS="[%p :: t=%t/f=%f/r=%r :: %e] "
+
 WORKDIR /src
 ENTRYPOINT ["/tools/source-build.sh"]
