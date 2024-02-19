@@ -31,21 +31,25 @@ Where
     -h
         Show this help message.
     -j NPROC
-        Override the number of processors to use for the build. Default is half the
-        value returned by nproc(1).
+        Override the number of processors to use for the build. Default is half
+        the value returned by nproc(1).
     -n
-        Do not build, just configure. Only useful for source and unit test builds, not
-        for Debian package builds.
+        Do not build, just configure. Only useful for source and unit test builds,
+        not for Debian package builds.
     -O DEB_BUILD_OPTIONS
         Pass options to the Debian build system.
     -R
-        Normally we patch RocksDB to disable PORTABLE build mode. This option leaves it
-        as-is.
+        Normally we patch RocksDB to disable PORTABLE build mode. This option
+        leaves it as-is.
     -t
         Run the unit tests.
+    -x
+        Build doxygen documentation. Builds into /src/build-doc, so will be visible
+        outside the container.
+
     NINJA_TARGET
-        The target to build with Ninja (if run without -d, -D or -t), e.g. radosgwd to
-        build just RGW.
+        The target to build with Ninja (if run without -d, -D or -t), e.g. radosgwd
+        to build just RGW.
 
 EOF
     exit 1
@@ -55,17 +59,18 @@ arch_set=1
 BUILD_TYPE=RelWithDebInfo
 deb_build_options=""
 debbuild=0
+doxygen=0
 nobuild=0
+nproc_overridden=0
 old_debbuild=0
 rocksdb_portable=0
 run_unittests=0
-nproc_overridden=0
 with_ccache=1
 
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "Ab:c:CdDEhj:nO:Rt" o; do
+while getopts "Ab:c:CdDEhj:nO:Rtx" o; do
     case "${o}" in
         A)
             arch_set=0
@@ -117,6 +122,9 @@ while getopts "Ab:c:CdDEhj:nO:Rt" o; do
             ;;
         t)
             run_unittests=1
+            ;;
+        x)
+            doxygen=1
             ;;
         *)
             usage
@@ -222,6 +230,11 @@ function srcbuild() {
     fi
 }
 
+function doxybuild() {
+    configure
+    ninja doxygen "$@"
+}
+
 function unittest() {
     configure
     if [[ $nobuild -eq 1 ]]; then
@@ -231,7 +244,9 @@ function unittest() {
     fi
 }
 
-if [[ $run_unittests -eq 1 ]]; then
+if [[ $doxygen -eq 1 ]]; then
+    doxybuild "$@"
+elif [[ $run_unittests -eq 1 ]]; then
     unittest "$@"
 elif [[ $old_debbuild -eq 1 ]]; then
     old_debbuild "$@"

@@ -107,6 +107,11 @@ $ ./build-ceph.sh -- -d -O "nostrip" --build-binary
 # Run the unit tests.
 $ ./build-ceph.sh -- -t
 
+# Build the doxygen docs.
+$ ./build-ceph.sh -- -x
+# To view the doxygen HTTP site, defaults to localhost:8000.
+$ cd SRCDIR/build-doc/doxygen/html && python -m http.server
+
 # Just construct the build image. Note this will be customised to your
 # source tree, as defined in vars.sh.
 $ ./build-container.sh
