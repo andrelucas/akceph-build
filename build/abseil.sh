@@ -31,8 +31,8 @@ env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
     cmake \
     -DCMAKE_INSTALL_PREFIX=/usr/local/abseil-cpp \
     -DCMAKE_CXX_STANDARD="${CMAKE_CXX_STANDARD}" \
-    -DCMAKE_RELEASE_TYPE=RelWithDebInfo \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -GNinja \
     ..
 ninja install
