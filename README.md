@@ -237,6 +237,26 @@ container has stopped. For example, a Debian build will *wipe* any deviations
 from the working copy as seen by Git. Commit your changes before doing a
 Debian build!
 
+#### Details of the build process.
+
+The container build takes a long time if building from scratch. The best thing
+to do is try to keep things that change infrequently but take a long time to
+the 'top' of the Dockerfile, so that fewer large layers need to be built.
+
+This is complicated by the fact that later stages of the container build are
+actually Ceph version-dependent, as explained above.
+
+The current practice is to construct a two-stage build image. The first stage
+`deps` installs enough software to install all our custom dependencies into
+known directories. The second stage `build` copies the outputs of those builds
+into the final build image. This isn't necessary, but it's neater - the build
+stage can evolve away from the deps stage as much as it likes, as long as it
+doesn't change anything about how the custom deps are built, and the huge
+compilation steps can be skipped.
+
+However, if you change the deps stage in the Dockerfile or anything in the
+`build/` directory, the deps stage will be rebuilt too.
+
 #### <a name='Binarydependencycompilationandinstall'></a>Binary dependency compilation and install
 
 Scripts in `build/` are run to configure various dependencies. Most are
@@ -246,7 +266,10 @@ configured via `config.env`.
 | - | - | - | -|
 | `ccache.sh` | ccache | | Compilation cache tool. |
 | `abseil.sh` | abseil-cpp | gRPC, OpenTelemetry | Google C++ utility library. |
-| `grpc.sh` | grpc | | Google gRPC C++ libraries and tools |
+| `golang.sh` | The Go language | The Ceph build CMake | Golang itself. |
+|| `buf` | The Ceph build CMake | Used to manage protocol buffer code generation. |
+| `grpc.sh` | grpc | The Ceph build CMake | Google gRPC C++ libraries and tools. |
+| `openssl3.sh` | OpenSSL 3.x | Nothing yet | A recent version of OpenSSL. |
 
 These are scripts that can do anything in the build environment. If we at some
 point decide to use e.g. Artifactory for the binaries for these things, the
