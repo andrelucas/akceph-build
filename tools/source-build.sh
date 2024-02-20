@@ -252,7 +252,10 @@ function doxybuild() {
 
 function unittest() {
     cd /src
-    env DEBIAN_FRONTEND=noninteractive apt-get -qy install clang-12
+    # Hack the environment.
+    env DEBIAN_FRONTEND=noninteractive apt-get -qy install clang-12 libxmlsec1-dev
+    env CC=gcc pip3 install xmlsec
+    # It won't build unless the target is cleared.
     rm -rf build && ./run-make-check.sh
 }
 
