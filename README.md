@@ -27,6 +27,13 @@ This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
 generated binaries suitable for running on systems we have, natively or in a
 container. It also builds standard Debian packages.
 
+This is a container with a standard (Ceph version-dependent) build image that
+you can use as a playground. It will build standard debs, sure, but it's also
+a pretty useful development tool. You can trash your own working copy, sure,
+because that's mounted into the container. However you're not hurting the host
+system at all, and if you break it, just restart the container. It won't hurt
+a bit.
+
 Note this doesn't work with Podman at the moment. It needs real Docker. With
 Podman a lot more care is required with permissions for mounted directories,
 and since Akamai is an Ubuntu house there's no clear incentive.
