@@ -33,6 +33,8 @@ FROM ubuntu:20.04 as build
 
 # Install ccache binary only.
 COPY --from=deps /usr/local/bin/ccache /usr/local/bin/ccache
+# Install go binaries in /go/bin into /usr/local/bin/.
+COPY --from=deps /go/bin/* /usr/local/bin/
 # Install dependency libraries and headers to their proper directories.
 COPY --from=deps /usr/local/abseil-cpp /usr/local/abseil-cpp
 COPY --from=deps /usr/local/go /usr/local/go

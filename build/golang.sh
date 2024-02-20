@@ -34,5 +34,9 @@ gobin=/usr/local/go/bin/go
 $gobin version
 
 # Install tools.
-export GOBIN=/usr/local/bin  # Without this, they'll install to ~/go/bin.
+export GOBIN=/go/bin  # These will be copied into the build stage, probably
+                      # into /usr/local/bin/.
+mkdir -p $GOBIN
+
+# Most tools are going to be 'go install' one-liners.
 $gobin install github.com/bufbuild/buf/cmd/buf@v1.29.0
