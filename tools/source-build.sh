@@ -251,12 +251,9 @@ function doxybuild() {
 }
 
 function unittest() {
-    configure
-    if [[ $nobuild -eq 1 ]]; then
-        echo "Build skipped"
-    else
-        ninja tests && ctest -j "$BUILD_NPROC" --output-on-failure "$@"
-    fi
+    cd /src
+    env DEBIAN_FRONTEND=noninteractive apt-get -qy install clang-12
+    rm -rf build && ./run-make-check.sh
 }
 
 if [[ $doxygen -eq 1 ]]; then
