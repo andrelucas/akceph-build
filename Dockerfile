@@ -16,11 +16,22 @@ RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	jq \
 	libssl-dev \
 	libzstd-dev \
+	net-tools \
+	netcat-openbsd \
 	ninja-build \
 	pkg-config \
+	python3-pip \
 	sudo \
 	vim \
 	zlib1g-dev
+
+# Install python modules required for vstart.sh.
+RUN pip3 install \
+	bcrypt \
+	python-dateutil \
+	jwt \
+	prettytable \
+	pyOpenSSL
 
 ## Populate /build inside the container. These scripts will build custom
 ## dependencies.
