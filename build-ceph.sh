@@ -14,6 +14,9 @@ function usage() {
     cat >&2 <<EOF
 Usage: $0 [-irR] [-o RUNOPT] [--] [OPTIONS-TO-BUILD-SCRIPT]
 Where:
+    -C
+        Do not clean the container after the end of the run. This is useful for
+        debugging, but can consume a lot of disk space.
     -i
         Start an interactive shell in the container.
     -o
@@ -31,22 +34,23 @@ EOF
 }
 
 interactive=0
+skip_clean=0
 
 declare -a bcopt runopt
 bcopt=()
 runopt=()
 
-while getopts "io:rR" o; do
+while getopts "Cio:R" o; do
     case "${o}" in
+        C)
+            skip_clean=1
+            ;;
         i)
             interactive=1
             ;;
         o)
             # shellcheck disable=SC2206
             runopt+=($OPTARG)
-            ;;
-        r)
-            runopt+=(--rm)
             ;;
         R)
             bcopt+=(-R)
@@ -63,6 +67,10 @@ if [[ $interactive -eq 1 ]]; then
 fi
 
 runopt+=(-it) # Always interactive - we want to be able to Ctrl-C.
+
+if [[ $skip_clean -ne 1 ]]; then
+    runopt+=(--rm)
+fi
 
 # Rely on Docker and this script to not rebuild from scratch.
 ./build-container.sh "${bcopt[@]}"
