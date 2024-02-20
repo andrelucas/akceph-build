@@ -16,8 +16,11 @@ trap 'rm -rf $tmpdir' EXIT
 set -e
 source config.env
 
+INSTALL_DIR=/usr/local/grpc
+
 if [[ $AKCEPH_ENABLE_GRPC != 1 ]]; then
     echo "AKCEPH_ENABLE_GRPC is not 1, skipping gRPC build"
+    mkdir -p "$INSTALL_DIR" # So the Dockerfile COPY has something to work with.
     exit 0
 fi
 
@@ -47,7 +50,7 @@ env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
     -DgRPC_ZLIB_PROVIDER=package \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_CXX_STANDARD="${CMAKE_CXX_STANDARD}" \
-    -DCMAKE_INSTALL_PREFIX=/usr/local/grpc \
+    -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DCMAKE_PREFIX_PATH=/usr/local/abseil-cpp/lib/cmake/absl \
     -DBUILD_SHARED_LIBS=OFF \

@@ -6,8 +6,11 @@ trap 'rm -rf $tmpdir' EXIT
 set -e
 source config.env
 
+INSTALL_DIR=/usr/local/abseil-cpp
+
 if [[ $AKCEPH_ENABLE_GRPC != 1 ]]; then
     echo "AKCEPH_ENABLE_GRPC is not 1, skipping abseil-cpp build"
+    mkdir -p "$INSTALL_DIR" # So the Dockerfile COPY has something to work with.
     exit 0
 fi
 
@@ -29,7 +32,7 @@ mkdir -p build
 cd build
 env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
     cmake \
-    -DCMAKE_INSTALL_PREFIX=/usr/local/abseil-cpp \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
     -DCMAKE_CXX_STANDARD="${CMAKE_CXX_STANDARD}" \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \

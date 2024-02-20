@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as deps
 
 # Install the base system, plus everything we'll need to build our custom
 # dependencies.
@@ -6,6 +6,42 @@ FROM ubuntu:20.04
 # - abseil: nothing
 # - grpc: libssl-dev (may change later), zlib1g-dev
 # - openssl3: nothing
+#
+RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	build-essential \
+	cmake \
+	curl \
+	git \
+	libssl-dev \
+	libzstd-dev \
+	ninja-build \
+	pkg-config \
+	zlib1g-dev
+
+## Populate /build inside the container. These scripts will build custom
+## dependencies.
+RUN mkdir -p /build
+COPY build/ /build/
+WORKDIR /build
+RUN ./ccache-bin.sh
+RUN ./golang.sh
+RUN ./abseil.sh
+RUN ./openssl3.sh
+RUN ./grpc.sh
+
+FROM ubuntu:20.04 as build
+
+# Install ccache binary only.
+COPY --from=deps /usr/local/bin/ccache /usr/local/bin/ccache
+# Install dependency libraries and headers to their proper directories.
+COPY --from=deps /usr/local/abseil-cpp /usr/local/abseil-cpp
+COPY --from=deps /usr/local/go /usr/local/go
+COPY --from=deps /usr/local/grpc /usr/local/grpc
+COPY --from=deps /usr/local/openssl3 /usr/local/openssl3
+
+# Install the base system, plus everything we'll need to build and run Ceph.
+# Don't forget to include things the custom dependencies need on, or they'll
+# either fail to link or fail to run.
 #
 RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	build-essential \
@@ -32,17 +68,6 @@ RUN pip3 install \
 	jwt \
 	prettytable \
 	pyOpenSSL
-
-## Populate /build inside the container. These scripts will build custom
-## dependencies.
-RUN mkdir -p /build
-COPY build/ /build/
-WORKDIR /build
-RUN ./ccache-bin.sh
-RUN ./golang.sh
-RUN ./abseil.sh
-RUN ./openssl3.sh
-RUN ./grpc.sh
 
 ## Unset compiler variables after building custom dependencies.
 ENV CC= CFLAGS=
