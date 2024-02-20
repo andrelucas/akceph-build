@@ -30,7 +30,7 @@ set -x
 cd "$tmpdir"
 git clone https://github.com/grpc/grpc.git
 cd grpc
-git checkout -b v1.59.3 tags/v1.59.3
+git checkout -b "v${AKCEPH_GRPC_VERSION}" "tags/v${AKCEPH_GRPC_VERSION}"
 git submodule update --init --recursive
 cd cmake
 rm -rf build
