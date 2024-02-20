@@ -25,7 +25,7 @@
 
 This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
 generated binaries suitable for running on systems we have, natively or in a
-container. It also builds standard Debian containers.
+container. It also builds standard Debian packages.
 
 Note this doesn't work with Podman at the moment. It needs real Docker. With
 Podman a lot more care is required with permissions for mounted directories,
@@ -168,11 +168,15 @@ in Debug mode. Then you can run in interactive mode with `-i` and change to
 the build directory and build whatever you like - `ninja radosgwd` (`ninja
 radosgw` for Ceph 18) is a personal favourite.
 
-For **vstart.sh** runs, you can do the development build as above. However,
-I've not got `vstart.sh` running properly in the container yet. You can still
-run everything it builds in the host, though - you'll just have to do `export
-LD_LIBARY_PATH=<SRCDIR>/build.Debug/lib` (and probably have run
-`install-deps.sh` in the host) before this will work.
+For **vstart.sh** runs, you can do the development build as above. You can run
+`vstart.sh` as you normally would, with the only constraint that the ports it
+opens won't by default be visible outside the container. If you know you're
+going to do this, you can add port forwards to `docker run` and fix the ports
+used by `vstart.sh` - this is a quite powerful way to run a dev cluster.
+
+You can also run `vstart.sh` or anything else it builds in the host, though -
+you'll have to do `export LD_LIBARY_PATH=<SRCDIR>/build.Debug/lib` (and
+probably have run `install-deps.sh` in the host) before this will work.
 
 For **standard builds**, do `./build-ceph -D`. This will, after some setup,
 run `make_debs.sh` and build Debian packages. Note that this will *trash*
