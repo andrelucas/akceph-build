@@ -33,6 +33,9 @@ Where
     -j NPROC
         Override the number of processors to use for the build. Default is half
         the value returned by nproc(1).
+    -L
+        Disable our override of the linker. Normally we'll explicitly set to use
+        ld.gold(1).
     -n
         Do not build, just configure. Only useful for source and unit test builds,
         not for Debian package builds.
@@ -60,6 +63,7 @@ BUILD_TYPE=RelWithDebInfo
 deb_build_options=""
 debbuild=0
 doxygen=0
+linker_override=1
 nobuild=0
 nproc_overridden=0
 old_debbuild=0
@@ -70,7 +74,7 @@ with_ccache=1
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "Ab:c:CdDEhj:nO:Rtx" o; do
+while getopts "Ab:c:CdDEhj:LnO:Rtx" o; do
     case "${o}" in
         A)
             arch_set=0
@@ -110,6 +114,9 @@ while getopts "Ab:c:CdDEhj:nO:Rtx" o; do
         j)
             nproc_overridden=1
             BUILD_NPROC=$(OPTARG)
+            ;;
+        L)
+            linker_override=0
             ;;
         n)
             nobuild=1
@@ -168,6 +175,8 @@ fi
 
 if [[ $rocksdb_portable -eq 0 ]]; then
     # Patch RocksDB to disable PORTABLE build mode.
+    # Note this will get undone by the Debian build - it will need to be
+    # patched in if we want it in the dpkgs.
     sed -i -e 's/\(rocksdb_CMAKE_ARGS -DPORTABLE=\)ON/\1OFF/' /src/cmake/modules/BuildRocksDB.cmake
 fi
 
@@ -206,9 +215,15 @@ function configure() {
     cmake_std_opts+=(-DALLOCATOR=tcmalloc)
     cmake_std_opts+=(-DBOOST_J="$BUILD_NPROC")
     cmake_std_opts+=(-DCMAKE_BUILD_TYPE="$BUILD_TYPE")
+    cmake_std_opts+=(-DCMAKE_CXX_FLAGS_DEBUG=-fno-lto)
     cmake_std_opts+=(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
     if [[ $with_ccache -eq 1 ]]; then
         cmake_std_opts+=(-DWITH_CCACHE=ON)
+    fi
+    if [[ $linker_override -eq 1 ]]; then
+        # Explicitly use ld.gold(1)
+        cmake_std_opts+=(-DCMAKE_LINKER=ld.gold)
+        cmake_std_opts+=(-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold)
     fi
 
     echo "Configuring with: ${cmake_std_opts[*]} ${cmake_opts[*]}"
