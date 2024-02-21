@@ -3,7 +3,7 @@
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 
 function usage() {
-    echo "Usage: $0 [-R]" 2>&2
+    echo "Usage: $0 [-nR]" 2>&2
     exit 1
 }
 

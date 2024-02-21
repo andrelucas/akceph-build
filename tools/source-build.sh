@@ -9,7 +9,7 @@ SCRIPTDIR="$(realpath "$(dirname "$0")")"
 
 function usage() {
     cat <<EOF
-Usage: $0 [-b CMAKEBUILDTYPE] [-c CMAKEOPTION [...]] [-C] [-d|-D|-t] [-E] [-j NPROC] [-n] [-O DEB_BUILD_OPTIONS] [NINJA_TARGET...]
+Usage: $0 [-b CMAKEBUILDTYPE] [-c CMAKEOPTION [...]] [-C] [-d|-D|-t] [-E] [-j NPROC] [-n] [-O DEB_BUILD_OPTIONS] [-R] [NINJA_TARGET...]
 
 Where
     -A
@@ -26,8 +26,8 @@ Where
     -D
         Build Debian packages using SRC/make-deps.sh
     -E
-        Use the file in the script directory to configure the environment
-        for the build. Keep the file simple, and use it sparingly.
+        Use the (host) file tools/env to configure the environment for the build.
+        Keep the file simple, and use it sparingly.
     -h
         Show this help message.
     -j NPROC

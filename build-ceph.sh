@@ -12,7 +12,7 @@ trap 'rm -rf $tmpdir' EXIT
 
 function usage() {
     cat >&2 <<EOF
-Usage: $0 [-irR] [-o RUNOPT] [--] [OPTIONS-TO-BUILD-SCRIPT]
+Usage: $0 [-CiR] [-o RUNOPT] [--] [OPTIONS-TO-BUILD-SCRIPT]
 Where:
     -C
         Do not clean the container after the end of the run. This is useful for
@@ -21,8 +21,6 @@ Where:
         Start an interactive shell in the container.
     -o
         Pass additional options to 'docker run'.
-    -r
-        Remove the container after the run. Saves space, but might delete work.
     -R
         Pass options to build-container.sh
 
