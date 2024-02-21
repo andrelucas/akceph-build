@@ -15,6 +15,7 @@ function build_preinstall() {
     local PRE_DIR="$1"
     rm -rf "$PRE_DIR"
     mkdir -p "$PRE_DIR"
+    echo "Construct preinstall environment from $CEPH_SRC"
     cp "$CEPH_SRC"/install-deps.sh "$PRE_DIR"
     # Copy *only the git-tracked files* from the debian directory.
     pushd "$CEPH_SRC/debian" || exit 1

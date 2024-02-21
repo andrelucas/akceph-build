@@ -8,10 +8,14 @@ function usage() {
     exit 1
 }
 
+no_env=0
 rebuild_container=0
 
-while getopts "R" o; do
+while getopts "nR" o; do
     case "${o}" in
+        n)
+            no_env=1
+            ;;
         R)
             rebuild_container=1
             ;;
@@ -25,7 +29,9 @@ shift $((OPTIND-1))
 set -e
 
 # shellcheck source=vars.sh.example
-source "$SCRIPTDIR/vars.sh"
+if [[ $no_env -eq 0 ]]; then
+    source "$SCRIPTDIR/vars.sh"
+fi
 source "$SCRIPTDIR/lib.sh"
 
 # Run this inside a flock(1) so concurent builds out of the same working copy

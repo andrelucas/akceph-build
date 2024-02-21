@@ -35,12 +35,14 @@ EOF
 
 interactive=0
 skip_clean=0
+source_branch="NOTSET"
+source_checkout=0
 
 declare -a bcopt runopt
 bcopt=()
 runopt=()
 
-while getopts "Cio:R" o; do
+while getopts "Cio:s:R" o; do
     case "${o}" in
         C)
             skip_clean=1
@@ -51,6 +53,10 @@ while getopts "Cio:R" o; do
         o)
             # shellcheck disable=SC2206
             runopt+=($OPTARG)
+            ;;
+        s)
+            source_checkout=1
+            source_branch="$OPTARG"
             ;;
         R)
             bcopt+=(-R)
@@ -72,8 +78,27 @@ if [[ $skip_clean -ne 1 ]]; then
     runopt+=(--rm)
 fi
 
-# Rely on Docker and this script to not rebuild from scratch.
-./build-container.sh "${bcopt[@]}"
+# Set up the source checkout directory if required. This needs to occur before
+# the build-container.sh script is run, because it uses the source tree to
+# construct the preinstall environment.
+if [[ $source_checkout -eq 1 ]]; then
+    if [[ -z $CEPH_GIT ]]; then
+        echo "Source checkout requested, but CEPH_GIT is not set"
+        exit 1
+    fi
+    if [[ -z $source_branch ]]; then
+        echo "Source branch cannot be empty"
+        exit 1
+    fi
+    CEPH_SRC="$tmpdir/src"
+    echo "Cloning '$CEPH_GIT' branch '$source_branch' to '$CEPH_SRC'"
+    # Don't do a recursive checkout, let the tools do that as required.
+    git clone --depth 1 -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
+fi
+
+# Rely on Docker and this script to not rebuild from scratch. Note the '-n',
+# so the environment doesn't get reloaded.
+./build-container.sh -n "${bcopt[@]}"
 
 # Make sure the ccache configuration is sane.
 if [[ ! -d $CCACHE_DIR ]]; then

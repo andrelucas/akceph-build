@@ -49,11 +49,32 @@ use external to the development team. This is a developer tool.
 $ cp vars.sh.example vars.sh
 $ vim vars.sh  # Make this match reality.
 
-# Build from source into Linux binaries in BUILDDIR/bin. This is create for
-# unit tests and vstart.sh clusters.
+# Build from existing source dir into Linux binaries in
+# build.RelWithDebInfo/bin.
 $ ./build-ceph.sh
 
-# Get command help.
+# Same, but clone the source directly. Provide a reference to clone.
+# (If you provide a tag, you'll get a 'detached HEAD' warning from git.
+# That's ok.)
+$ ./build-ceph.sh -s v18.2.1
+
+# All-in-one: Clone, build debs. This is great for CI jobs. The
+# double-hyphens matter.
+$ ./build-ceph.sh -s v18.2.1 -- -D
+
+# Get an interactive shell on the build container (existing source).
+$ ./build-ceph.sh -i
+
+# Same, but with a clean clone.
+$ ./build-ceph.sh -i -s v17.2.7
+
+# Run a Debug build in build.Debug/bin. I recommend a preexisting source
+# tree if you're debugging, otherwise it's going to be very tiresom to
+# make changes.
+$ ./build-ceph.sh -- -b Debug
+
+# Get command help. Note the double-hyphens - you're passing options to a
+# script that runs inside the container.
 $ ./build-ceph.sh -- -h
 
 ... lots of Docker stuff ...

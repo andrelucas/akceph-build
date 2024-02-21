@@ -3,17 +3,33 @@
 ##
 ## These variables might legitimately be changed by the user.
 ##
+
+# The location of a shared ccache, which will get populated over time.
 export CCACHE_DIR=$HOME/.ccache
-# Make CCACHE_CONF under CCACHE_DIR or you'll confuse matters.
+
+# Keep CCACHE_CONF under CCACHE_DIR or you'll confuse matters.
 export CCACHE_CONF=$CCACHE_DIR/ccache.conf
+
+# This is used if you're cloning a remote repository directly.
+export CEPH_GIT=https://github.com/andrelucas/ceph.git
+
+# This is used if you're working with a preexisting clone.
 export CEPH_SRC=~/git/ceph
+
+# This is where releases will be put by dpkg-buildpackage.
 export RELEASE_DIR=$PWD/release
 
 ##
-## You probably shouldn't change these.
+## You probably shouldn't change values below this point.
 ##
+
+# The Docker binary. Podman (RHEL/Fedora) doesn't work yet, alas.
 export DOCKER=docker
+
+# At some point this will stabilise and we will be able to use non-local
+# Docker images.
 export IMAGENAME=cbuild
+
 # This is where Debian packages will be found after a Debian build.
 export TOOLS_SRC=$PWD/tools
 
