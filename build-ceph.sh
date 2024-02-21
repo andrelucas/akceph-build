@@ -81,7 +81,9 @@ fi
 # Set up the source checkout directory if required. This needs to occur before
 # the build-container.sh script is run, because it uses the source tree to
 # construct the preinstall environment.
-if [[ $source_checkout -eq 1 ]]; then
+if [[ $source_checkout -eq 0 ]]; then
+    echo "Will use a pre-existing source tree in '$CEPH_SRC'"
+else
     if [[ -z $CEPH_GIT ]]; then
         echo "Source checkout requested, but CEPH_GIT is not set"
         exit 1
@@ -93,7 +95,8 @@ if [[ $source_checkout -eq 1 ]]; then
     CEPH_SRC="$tmpdir/src"
     echo "Cloning '$CEPH_GIT' branch '$source_branch' to '$CEPH_SRC'"
     # Don't do a recursive checkout, let the tools do that as required.
-    git clone --depth 1 -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
+    git clone --depth 1 -c advice.detachedHead=false \
+        -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
 fi
 
 # Rely on Docker and this script to not rebuild from scratch. Note the '-n',
@@ -110,7 +113,7 @@ fi
 
 # Create a preinstall environment that matches the one built into the base
 # image. This allows multiple versions of the base image.
-build_preinstall "$tmpdir/preinstall"
+build_preinstall "$tmpdir/preinstall" build-ceph
 pushd "$tmpdir"
 tag=$(hash_dir preinstall)
 echo "Run: Preinstall image tag: $tag"

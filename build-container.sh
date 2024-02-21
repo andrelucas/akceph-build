@@ -2,11 +2,15 @@
 
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 
-
 function usage() {
     echo "Usage: $0 [-R]" 2>&2
     exit 1
 }
+
+tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
+# The trap has to remove the tmpdir with sudo because the container will
+# probably make its contents owned by root.
+trap 'test -n "$tmpdir" && sudo rm -rf $tmpdir' EXIT
 
 no_env=0
 rebuild_container=0
@@ -34,23 +38,19 @@ if [[ $no_env -eq 0 ]]; then
 fi
 source "$SCRIPTDIR/lib.sh"
 
-# Run this inside a flock(1) so concurent builds out of the same working copy
-# don't stomp on each other. If this is irksome, have multiple working copies.
-(
-    flock -n 9 || (echo "Another build is in progress" && exit 1)
-    PRE_DIR="$SCRIPTDIR/preinstall"
-    build_preinstall "$PRE_DIR"
-    pushd "$(dirname "$PRE_DIR")"
-    tag=$(hash_dir "$(basename "$PRE_DIR")")
-    echo "Build: Preinstall image tag: $tag"
-    popd
+# Build the preinstall image in the temporary directory, so we can run
+# concurrently with other builds.
+PRE_DIR="$tmpdir/preinstall"
+build_preinstall "$PRE_DIR" build-container
+pushd "$(dirname "$PRE_DIR")"
+tag=$(hash_dir "$(basename "$PRE_DIR")")
+echo "Build: Preinstall image tag: $tag"
+popd
 
-    if [[ $rebuild_container -eq 1 ]]; then
-        echo "Cleaning preinstall image"
-        $DOCKER image rm -f "$IMAGENAME:$tag" || true
-    fi
+if [[ $rebuild_container -eq 1 ]]; then
+    echo "Cleaning preinstall image"
+    $DOCKER image rm -f "$IMAGENAME:$tag" || true
+fi
 
-    $DOCKER build -t "$IMAGENAME:$tag" .
-
-) 9>"$SCRIPTDIR"/preinstall.lock
+$DOCKER build -t "$IMAGENAME:$tag" .
 
