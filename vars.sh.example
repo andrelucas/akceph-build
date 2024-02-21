@@ -30,7 +30,8 @@ export DOCKER=docker
 # Docker images.
 export IMAGENAME=cbuild
 
-# This is where Debian packages will be found after a Debian build.
+# This is the host directory containing tools scripts. These are mounted into
+# the container.
 export TOOLS_SRC=$PWD/tools
 
 # Paths inside the container. These don't magically change with these
