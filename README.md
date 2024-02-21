@@ -3,9 +3,11 @@
 <!-- vscode-markdown-toc -->
 * [tl;dr](#tldr)
 * [Recommended use](#Recommendeduse)
+	* [Warning for Debian builds](#WarningforDebianbuilds)
 * [Overview](#Overview)
 	* [Build image](#Buildimage)
 		* [Container builds for the uninitiated](#Containerbuildsfortheuninitiated)
+		* [Details of the build process.](#Detailsofthebuildprocess.)
 		* [Binary dependency compilation and install](#Binarydependencycompilationandinstall)
 		* [`install-deps.sh` and multiple versions](#install-deps.shandmultipleversions)
 		* [`install-deps.sh` speed hack](#install-deps.shspeedhack)
@@ -13,7 +15,7 @@
 		* [Power options](#Poweroptions)
 	* [`build-container.sh` - the container builder](#build-container.sh-thecontainerbuilder)
 	* [`source-build.sh` - the Ceph builder script inside the container](#source-build.sh-theCephbuilderscriptinsidethecontainer)
-* [Miscellanea](#Miscellanea)
+* [Notes](#Notes)
 	* [What's this for?](#Whatsthisfor)
 	* [Why is it in a separate directory to the Ceph source?](#WhyisitinaseparatedirectorytotheCephsource)
 
@@ -49,69 +51,28 @@ use external to the development team. This is a developer tool.
 $ cp vars.sh.example vars.sh
 $ vim vars.sh  # Make this match reality.
 
-# Build from existing source dir into Linux binaries in
+# Build from an existing source dir into Linux binaries in
 # build.RelWithDebInfo/bin.
 $ ./build-ceph.sh
 
-# Same, but clone the source directly. Provide a reference to clone.
-# (If you provide a tag, you'll get a 'detached HEAD' warning from git.
-# That's ok.)
+# Same, but clone the source directly. You must provide a git ref.
 $ ./build-ceph.sh -s v18.2.1
 
-# All-in-one: Clone, build debs. This is great for CI jobs. The
-# double-hyphens matter.
+# All-in-one: Clone, build debs. This is great for CI jobs. The double
+# hyphens matter.
 $ ./build-ceph.sh -s v18.2.1 -- -D
 
 # Get an interactive shell on the build container (existing source).
 $ ./build-ceph.sh -i
 
-# Same, but with a clean clone.
+# Same, but with a clean clone. WARNING: When the shell exits, the clone
+# will be deleted!
 $ ./build-ceph.sh -i -s v17.2.7
 
 # Run a Debug build in build.Debug/bin. I recommend a preexisting source
-# tree if you're debugging, otherwise it's going to be very tiresom to
+# tree if you're debugging, otherwise it's going to be very tiresome to
 # make changes.
 $ ./build-ceph.sh -- -b Debug
-
-# Get command help. Note the double-hyphens - you're passing options to a
-# script that runs inside the container.
-$ ./build-ceph.sh -- -h
-
-... lots of Docker stuff ...
-
-~/git/akceph-build
-Usage: /tools/source-build.sh [-b CMAKEBUILDTYPE] [-c CMAKEOPTION [...]] [-C] [-d|-D|-t] [-E] [-j NPROC] [-n] [-O DEB_BUILD_OPTIONS] [NINJA_TARGET...]
-
-Where
-    -b CMAKEBUILDTYPE
-        Set the CMake build type (default: RelWithDebInfo).
-    -c CMAKEOPTION
-        Pass a CMake option to the build, e.g. -DWITH_ASAN=ON, "-GUnix Makefiles".
-    -C
-        Disable use of ccache. This has a brutal build-time penalty.
-    -d
-        Build a Debian package using raw dpkg-buildpackage.
-    -D
-        Build Debian packages using SRC/make-deps.sh
-    -E
-        Use the file in the script directory to configure the environment
-        for the build. Keep the file simple, and use it sparingly.
-    -h
-        Show this help message.
-    -j NPROC
-        Override the number of processors to use for the build. Default is half the
-        value returned by nproc(1).
-    -n
-        Do not build, just configure. Only useful for source and unit test builds, not
-        for Debian package builds.
-    -O DEB_BUILD_OPTIONS
-        Pass options to the Debian build system.
-    -t
-        Run the unit tests.
-    NINJA_TARGET
-        The target to build with Ninja (if run without -d, -D or -t), e.g. radosgwd to
-        build just RGW.
-
 
 # Build Debian packages using `make-debs.sh`. This will *torch*
 # anything not in git inside your working copy - beware!
@@ -137,51 +98,101 @@ $ ./build-ceph.sh -- -t
 
 # Build the doxygen docs.
 $ ./build-ceph.sh -- -x
-# To view the doxygen HTTP site, defaults to localhost:8000.
+# View the doxygen HTTP site. The server here defaults to localhost:8000.
 $ cd SRCDIR/build-doc/doxygen/html && python -m http.server
 
 # Just construct the build image. Note this will be customised to your
-# source tree, as defined in vars.sh.
+# source tree, as defined in vars.sh. It won't clone anything.
 $ ./build-container.sh
 
-## Interactive building.
+```
 
-# Get an interactive shell on the build image, with everything mounted
-# ready to build.
-$ ./build-ceph.sh -i
+The script running (by default) inside the container has some useful help.
 
+```sh
+# Get command help. Note the double-hyphens - you're passing options to a
+# script that runs inside the container.
+$ ./build-ceph.sh -- -h
+```
+
+Which gives:
+
+```text
+... lots of Docker stuff ...
+
+Usage: /tools/source-build.sh [-b CMAKEBUILDTYPE] [-c CMAKEOPTION [...]] [-C] [-d|-D|-t] [-E] [-j NPROC] [-n] [-O DEB_BUILD_OPTIONS] [NINJA_TARGET...]
+
+Where
+    -A
+        Do not set -march, let the compiler decide the architecture. This will
+        result in slower generated code.
+    -b CMAKEBUILDTYPE
+        Set the CMake build type (default: RelWithDebInfo).
+    -c CMAKEOPTION
+        Pass a CMake option to the build, e.g. -DWITH_ASAN=ON, "-GUnix Makefiles".
+    -C
+        Disable use of ccache. This has a brutal build-time penalty.
+    -d
+        Build a Debian package using raw dpkg-buildpackage.
+    -D
+        Build Debian packages using SRC/make-deps.sh
+    -E
+        Use the file in the script directory to configure the environment
+        for the build. Keep the file simple, and use it sparingly.
+    -h
+        Show this help message.
+    -j NPROC
+        Override the number of processors to use for the build. Default is half
+        the value returned by nproc(1).
+    -L
+        Disable our override of the linker. Normally we will explicitly set
+        the build to use ld.gold(1) as it is a great deal faster and less
+        buggy.
+    -n
+        Do not build, just configure. Only useful for source and unit test builds,
+        not for Debian package builds.
+    -O DEB_BUILD_OPTIONS
+        Pass options to the Debian build system.
+    -R
+        Normally we patch RocksDB to disable PORTABLE build mode. This option
+        leaves it as-is.
+    -t
+        Run the unit tests.
+    -x
+        Build doxygen documentation. Builds into /src/build-doc, so will be visible
+        outside the container.
+
+    NINJA_TARGET
+        The target to build with Ninja (if run without -d, -D or -t), e.g. radosgwd
+        to build just RGW.
+```
+
+There's an interactive mode where you can do more or less whatever you want in
+relative safety. Most of the time you'll speak to the script that
+`build-ceph.sh` runs, `/tools/source-build.sh`.
+
+```sh
 ## Once inside the build image by using '-i'...
 
 # Run normal commands.
-root@eb10eda81490:/src# cd /src/build.Debug
-root@eb10eda81490:/src# ninja
+root@eb10eda81490:/src% cd /src/build.Debug
+root@eb10eda81490:/src% ninja
 # Once you've build things, you can run vstart.sh on the outputs
 
-
 # Build fully.
-root@eb10eda81490:/src# /tools/source-build.sh
+root@eb10eda81490:/src% /tools/source-build.sh
 
 # Build for debug (default is RelWithDebInfo).
-root@eb10eda81490:/src# /tools/source-build.sh -b Debug
+root@eb10eda81490:/src% /tools/source-build.sh -b Debug
 # Build with ASAN enabled.
-root@eb10eda81490:/src# /tools/source-build.sh -c -DWITH_ASAN=ON
+root@eb10eda81490:/src% /tools/source-build.sh -c -DWITH_ASAN=ON
 # Build with make(1) instead of Ninja. (Notice the quotes.)
-root@eb10eda81490:/src# /tools/source-build.sh -c "-GUnix Makefiles"
+root@eb10eda81490:/src% /tools/source-build.sh -c "-GUnix Makefiles"
 # Build with the GOLD linker.
-root@eb10eda81490:/src# /tools/source-build.sh \
+root@eb10eda81490:/src% /tools/source-build.sh \
   -c "-DCMAKE_LINKER=ld.gold" \
   -c "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"
 # etc.
-
-# You can pass options to the entrypoint in the container
-# (source-build.sh by default) directly, by adding options to
-# the entrypoint script after '--' on the build-ceph.sh command
-# line:
-$ ./build-ceph.sh -- -b Debug
-
-# Or:
-
-$ ./build-ceph.sh -- -DWITH_ASAN=ON
 
 ```
 
@@ -206,8 +217,12 @@ You can also run `vstart.sh` or anything else it builds in the host, though -
 you'll have to do `export LD_LIBARY_PATH=<SRCDIR>/build.Debug/lib` (and
 probably have run `install-deps.sh` in the host) before this will work.
 
-For **standard builds**, do `./build-ceph -D`. This will, after some setup,
-run `make_debs.sh` and build Debian packages. Note that this will *trash*
+For **standard builds**, do `./build-ceph -s TAG -- -D`. This will clone Ceph,
+set up the environment, run `make_debs.sh` and build Debian packages.
+
+### <a name='WarningforDebianbuilds'></a>Warning for Debian builds
+
+Note that anything involving `-D` or `-d` (Debian builds) will *trash*
 anything non-standard in your working copy! Commit (and ideally push) anything
 in your local working copy before doing this, or you'll lose it. I mean it.
 
@@ -265,7 +280,7 @@ container has stopped. For example, a Debian build will *wipe* any deviations
 from the working copy as seen by Git. Commit your changes before doing a
 Debian build!
 
-#### Details of the build process.
+#### <a name='Detailsofthebuildprocess.'></a>Details of the build process.
 
 The container build takes a long time if building from scratch. The best thing
 to do is try to keep things that change infrequently but take a long time to
@@ -377,7 +392,7 @@ script.)
 `source-build.sh` takes many options, but most are fairly niche. The `-h` help
 explains what each option does, and the examples above should help.
 
-## <a name='Miscellanea'></a>Miscellanea
+## <a name='Notes'></a>Notes
 
 ### <a name='Whatsthisfor'></a>What's this for?
 
@@ -388,8 +403,7 @@ The aim is that the build machine or one's own machines can be used to build
 consistent images. In particular, it needs to be possible to have multiple
 builds of multiple versions of Ceph in flight at the same time.
 
-A separate tool will be made for building 'final' container images for user
-consumption.
+This doesn't yet build the 'final' container that will be used by Gen2.
 
 ### <a name='WhyisitinaseparatedirectorytotheCephsource'></a>Why is it in a separate directory to the Ceph source?
 
