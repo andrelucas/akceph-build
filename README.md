@@ -59,7 +59,8 @@ $ ./build-ceph.sh
 $ ./build-ceph.sh -s v18.2.1
 
 # All-in-one: Clone, build debs. This is great for CI jobs. The double
-# hyphens matter.
+# hyphens matter. Packages will be in the release/ subdirectory on build
+# completion.
 $ ./build-ceph.sh -s v18.2.1 -- -D
 
 # Get an interactive shell on the build container (existing source).
@@ -81,7 +82,8 @@ $ ./build-ceph.sh -- -b Debug
 $ ./build-ceph.sh -- -D
 
 # Build Debian packages using `dpkg-buildpackage`. This too may wreak
-# havoc in your working copy, be careful.
+# havoc in your working copy, be careful. '-d' outputs go into the debian/
+# folder of the source.
 $ ./build-ceph.sh -- -d
 #  '-d' is sometimes more helpful than -D because you can add extra
 # options that will be passed to dpkg-buildpackage(1), which can drastically
@@ -135,7 +137,7 @@ Where
     -d
         Build a Debian package using raw dpkg-buildpackage.
     -D
-        Build Debian packages using SRC/make-deps.sh
+        Build Debian packages using SRC/make-deps.sh.
     -E
         Use the file in the script directory to configure the environment
         for the build. Keep the file simple, and use it sparingly.
