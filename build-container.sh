@@ -8,9 +8,7 @@ function usage() {
 }
 
 tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
-# The trap has to remove the tmpdir with sudo because the container will
-# probably make its contents owned by root.
-trap 'test -n "$tmpdir" && sudo rm -rf $tmpdir' EXIT
+trap 'test -n "$tmpdir" && rm -rf $tmpdir' EXIT
 
 no_env=0
 rebuild_container=0
