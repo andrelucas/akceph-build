@@ -102,9 +102,9 @@ else
     fi
     CEPH_SRC="$tmpdir/src"
     echo "Cloning '$CEPH_GIT' branch '$source_branch' to '$CEPH_SRC'"
-    # Do a recursive checkout, otherwise it'll be checked out inside the
-    # container, typically as root.
-    git clone --recurse-submodules --shallow-submodules --depth 1 \
+    # Let the build sdo the submodule update. We can't do a shallow submodule
+    # fetch, that breaks it.
+    git clone --depth 1 \
         -c advice.detachedHead=false \
         -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
 fi
