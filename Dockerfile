@@ -47,20 +47,26 @@ COPY --from=deps /usr/local/openssl3 /usr/local/openssl3
 # are useful to developers here - an editor is nice, for example.
 #
 RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	bison \
 	build-essential \
 	clang-12 \
 	cmake \
 	curl \
 	debhelper \
 	doxygen \
+	flex \
 	git \
 	jq \
+	libcap-dev \
+	libevent-dev \
 	libssl-dev \
 	libxmlsec1-dev \
+	libyaml-cpp-dev>=0.6 \
 	libzstd-dev \
 	net-tools \
 	netcat-openbsd \
 	ninja-build \
+	nlohmann-json3-dev \
 	pkg-config \
 	python3-pip \
 	reprepro \
