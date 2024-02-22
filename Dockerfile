@@ -90,7 +90,12 @@ ENV CXX= CXXFLAGS=
 
 ARG PRE_DIR=/tmp/preinstall
 RUN mkdir -p ${PRE_DIR} ${PRE_DIR}/debian
-COPY preinstall ${PRE_DIR}
+# The preinstall source directory must be set by the caller as a build arg.
+# Further, it needs to be a subdirectory of the build context, so that the
+# COPY command can see it. Finally, it needs to be a relative path because
+# that's how Docker wants it.
+ARG PRE_SOURCE_DIR=THIS_ARG_MUST_BE_SET
+COPY ${PRE_SOURCE_DIR} ${PRE_DIR}
 WORKDIR ${PRE_DIR}
 RUN ./install-deps.sh
 

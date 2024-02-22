@@ -50,5 +50,7 @@ if [[ $rebuild_container -eq 1 ]]; then
     $DOCKER image rm -f "$IMAGENAME:$tag" || true
 fi
 
-$DOCKER build -t "$IMAGENAME:$tag" .
+PRE_DIR_RELATIVE="${PRE_DIR#$SCRIPTDIR/}" # Strip PWD from the PRE_DIR.
+
+$DOCKER build --build-arg "PRE_SOURCE_DIR=$PRE_DIR_RELATIVE" -t "$IMAGENAME:$tag" .
 
