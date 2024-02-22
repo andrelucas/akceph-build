@@ -5,3 +5,6 @@
 vars.sh
 
 /tmp.*
+
+/release
+/release*
