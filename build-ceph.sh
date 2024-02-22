@@ -8,7 +8,7 @@ source "$SCRIPTDIR/vars.sh"
 source "$SCRIPTDIR/lib.sh"
 
 tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
-trap 'rm -rf $tmpdir' EXIT
+trap 'rm -rf $tmpdir >/dev/null 2>&1' EXIT
 
 function usage() {
     cat >&2 <<EOF
@@ -21,6 +21,9 @@ Where:
         Start an interactive shell in the container.
     -o
         Pass additional options to 'docker run'.
+    -r RELEASE_DIR
+        Override the release directory. This is where the build artifacts will be
+        placed. Helpful if multiple builds are in progress.
     -R
         Pass options to _build-container.sh
 
@@ -40,7 +43,7 @@ declare -a bcopt runopt
 bcopt=()
 runopt=()
 
-while getopts "Cio:s:R" o; do
+while getopts "Cio:s:r:R" o; do
     case "${o}" in
         C)
             skip_clean=1
@@ -55,6 +58,13 @@ while getopts "Cio:s:R" o; do
         s)
             source_checkout=1
             source_branch="$OPTARG"
+            ;;
+        r)
+            # Use realpath(1) to resolve to a full pathname. `docker run`
+            # doesn't like relative paths.
+            RELEASE_DIR="$(realpath "$OPTARG")"
+            mkdir -p "$RELEASE_DIR" || (echo "Failed to create '$RELEASE_DIR'" >&2; exit 1)
+            echo "Override RELEASE_DIR='$RELEASE_DIR'"
             ;;
         R)
             bcopt+=(-R)
