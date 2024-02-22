@@ -22,7 +22,7 @@ Where:
     -o
         Pass additional options to 'docker run'.
     -R
-        Pass options to build-container.sh
+        Pass options to _build-container.sh
 
 Anything after '--' is passed to the build script run in the container, which by
 default is tools/source-build.sh.
@@ -77,7 +77,7 @@ if [[ $skip_clean -ne 1 ]]; then
 fi
 
 # Set up the source checkout directory if required. This needs to occur before
-# the build-container.sh script is run, because it uses the source tree to
+# the _build-container.sh script is run, because it uses the source tree to
 # construct the preinstall environment.
 if [[ $source_checkout -eq 0 ]]; then
     echo "Will use a pre-existing source tree in '$CEPH_SRC'"
@@ -99,7 +99,7 @@ fi
 
 # Rely on Docker and this script to not rebuild from scratch. Note the '-n',
 # so the environment doesn't get reloaded.
-./build-container.sh -n "${bcopt[@]}"
+./_build-container.sh -n "${bcopt[@]}"
 
 # Make sure the ccache configuration is sane.
 if [[ ! -d $CCACHE_DIR ]]; then

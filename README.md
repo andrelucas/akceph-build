@@ -13,7 +13,7 @@
 		* [`install-deps.sh` speed hack](#install-deps.shspeedhack)
 	* [`build-ceph.sh` - the build script.](#build-ceph.sh-thebuildscript.)
 		* [Power options](#Poweroptions)
-	* [`build-container.sh` - the container builder](#build-container.sh-thecontainerbuilder)
+	* [`_build-container.sh` - the container builder](#_build-container.sh-thecontainerbuilder)
 	* [`source-build.sh` - the Ceph builder script inside the container](#source-build.sh-theCephbuilderscriptinsidethecontainer)
 * [Notes](#Notes)
 	* [What's this for?](#Whatsthisfor)
@@ -106,7 +106,7 @@ $ cd SRCDIR/build-doc/doxygen/html && python -m http.server
 
 # Just construct the build image. Note this will be customised to your
 # source tree, as defined in vars.sh. It won't clone or run anything.
-$ ./build-container.sh
+$ ./_build-container.sh
 
 ```
 
@@ -375,7 +375,7 @@ More powerfully still, you can pass in arbitrary environment variables via
 file `tools/env`. These can make substantial differences to the output, and if
 you try you can totally break things, so use this sparingly.
 
-### <a name='build-container.sh-thecontainerbuilder'></a>`build-container.sh` - the container builder
+### <a name='_build-container.sh-thecontainerbuilder'></a>`_build-container.sh` - the container builder
 
 This is mostly a wrapper around `docker build`, with some subtleties described
 above with regard to running the proper version of `install-deps.sh`.
