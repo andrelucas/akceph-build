@@ -6,5 +6,5 @@ vars.sh
 
 /tmp.*
 
-# By convention, releases go in directories starting with release.
-/release*
+# By convention, releases go in directories starting with release_.
+/release_*
