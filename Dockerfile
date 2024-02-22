@@ -1,7 +1,9 @@
 FROM ubuntu:20.04 as deps
 
 # Install the base system, plus everything we'll need to build our custom
-# dependencies.
+# dependencies. We'll reinstall a fresh image later on, you only need the
+# packages required to build the custom dependencies, not for building Ceph.
+#
 # - ccache: libzstd-dev
 # - abseil: nothing
 # - grpc: libssl-dev (may change later), zlib1g-dev

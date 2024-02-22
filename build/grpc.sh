@@ -31,11 +31,10 @@ fi
 
 set -x
 cd "$tmpdir"
-git clone https://github.com/grpc/grpc.git
-cd grpc
-git checkout -b "v${AKCEPH_GRPC_VERSION}" "tags/v${AKCEPH_GRPC_VERSION}"
-git submodule update --init --recursive
-cd cmake
+git clone --recurse-submodules --shallow-submodules --depth=1 \
+    -c advice.detachedHead=false \
+    -b "v${AKCEPH_GRPC_VERSION}" https://github.com/grpc/grpc.git
+cd grpc/cmake
 rm -rf build
 mkdir -p build
 cd build
