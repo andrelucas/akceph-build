@@ -90,12 +90,12 @@ $ ./build-ceph.sh -- -d
 #  '-d' is sometimes more helpful than -D because you can add extra
 # options that will be passed to dpkg-buildpackage(1), which can drastically
 # shorten build time. E.g.
-$ ./build-ceph.sh -- -d --build=binary
+$ ./build-ceph.sh -- -d -- --build=binary
 
 # Both debian builds take the -o option to set DEB_BUILD_OPTIONS.
 $ ./build-ceph.sh -- -d -O "nostrip"
 # Of course these can be combined.
-$ ./build-ceph.sh -- -d -O "nostrip" --build-binary
+$ ./build-ceph.sh -- -d -O "nostrip" -- --build-binary
 
 # Run the unit tests. This is unreliable, because the unit tests are
 #  unreliable.
