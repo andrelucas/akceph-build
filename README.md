@@ -30,11 +30,10 @@ generated binaries suitable for running on systems we have, natively or in a
 container. It also builds standard Debian packages.
 
 This is a container with a standard (Ceph version-dependent) build image that
-you can use as a playground. It will build standard debs, sure, but it's also
-a pretty useful development tool. You can trash your own working copy, sure,
-because that's mounted into the container. However you're not hurting the host
-system at all, and if you break it, just restart the container. It won't hurt
-a bit.
+you can use to build standard packages, but can also use as a playground. In
+developer mode you can trash your working copy, because that's mounted into
+the container, but you can't hurt the host system at all. (Avoid the pain of
+trashing your working copy by pushing your changes.)
 
 Note this doesn't work with Podman at the moment. It needs real Docker. With
 Podman a lot more care is required with permissions for mounted directories,
@@ -47,20 +46,21 @@ use external to the development team. This is a developer tool.
 
 ```sh
 
-# Copy the configuration file and customise for your setup.
+# Copy the configuration file and customise for your setup. For standard
+# builds, this will likely not need any changes.
 $ cp vars.sh.example vars.sh
-$ vim vars.sh  # Make this match reality.
+$ vim vars.sh  # Edit to match reality.
 
 # Build from an existing source dir into Linux binaries in
 # build.RelWithDebInfo/bin.
 $ ./build-ceph.sh
 
-# Same, but clone the source directly. You must provide a git ref.
+# Same, but clone the source directly. You must provide a git ref. On job completion, the clone will be deleted.
 $ ./build-ceph.sh -s v18.2.1
 
-# All-in-one: Clone, build debs. This is great for CI jobs. The double
-# hyphens matter. Packages will be in the release/ subdirectory on build
-# completion.
+# All-in-one: Clone, build debs using Ceph's make-debs.sh. This is great
+# for CI jobs. The double hyphens matter. Packages will be in the release/
+# subdirectory on build completion.
 $ ./build-ceph.sh -s v18.2.1 -- -D
 
 # Get an interactive shell on the build container (existing source).
@@ -95,7 +95,8 @@ $ ./build-ceph.sh -- -d -O "nostrip"
 # Of course these can be combined.
 $ ./build-ceph.sh -- -d -O "nostrip" --build-binary
 
-# Run the unit tests.
+# Run the unit tests. This is unreliable, because the unit tests are
+#  unreliable.
 $ ./build-ceph.sh -- -t
 
 # Build the doxygen docs.
@@ -104,7 +105,7 @@ $ ./build-ceph.sh -- -x
 $ cd SRCDIR/build-doc/doxygen/html && python -m http.server
 
 # Just construct the build image. Note this will be customised to your
-# source tree, as defined in vars.sh. It won't clone anything.
+# source tree, as defined in vars.sh. It won't clone or run anything.
 $ ./build-container.sh
 
 ```
