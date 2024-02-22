@@ -43,22 +43,27 @@ COPY --from=deps /usr/local/openssl3 /usr/local/openssl3
 
 # Install the base system, plus everything we'll need to build and run Ceph.
 # Don't forget to include things the custom dependencies need on, or they'll
-# either fail to link or fail to run.
+# either fail to link or fail to run. Don't be afraid to include things that
+# are useful to developers here - an editor is nice, for example.
 #
 RUN apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	build-essential \
+	clang-12 \
 	cmake \
 	curl \
+	debhelper \
 	doxygen \
 	git \
 	jq \
 	libssl-dev \
+	libxmlsec1-dev \
 	libzstd-dev \
 	net-tools \
 	netcat-openbsd \
 	ninja-build \
 	pkg-config \
 	python3-pip \
+	reprepro \
 	sudo \
 	vim \
 	zlib1g-dev

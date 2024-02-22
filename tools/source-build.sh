@@ -191,7 +191,6 @@ if [[ $use_envfile -eq 1 ]]; then
 fi
 
 function old_debbuild() {
-    sudo apt-get install -y reprepro
     # The debian build switches to GNU Make, so we have to be careful how much
     # parallelism we ask for.
     # The first parameter is the base directory for the built images (it
@@ -200,7 +199,6 @@ function old_debbuild() {
 }
 
 function debbuild() {
-    sudo apt-get install -y debhelper
     env DEB_BUILD_OPTIONS="parallel=$BUILD_NPROC $deb_build_options" dpkg-buildpackage -uc -us "$@"
 }
 
@@ -252,8 +250,8 @@ function doxybuild() {
 
 function unittest() {
     cd /src
+    ## XXX this is not reliable at the moment.
     # Hack the environment.
-    env DEBIAN_FRONTEND=noninteractive apt-get -qy install clang-12 libxmlsec1-dev
     env CC=gcc pip3 install xmlsec
     # It won't build unless the target is cleared.
     rm -rf build && ./run-make-check.sh
