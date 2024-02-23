@@ -13,4 +13,4 @@ $sudo rm -rf tmp.*
 $sudo rm -rf preinstall*
 $sudo rm -rf release_*
 $sudo find release -mindepth 1 -delete
-git co release/
+git checkout release/
