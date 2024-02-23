@@ -136,7 +136,6 @@ $DOCKER run \
     -v "$CCACHE_DIR":"$C_CCACHE" \
     -v "$CEPH_SRC":"$C_SRC" \
     -v "$RELEASE_DIR":"$C_RELEASE" \
-    -v "$TOOLS_SRC":"$C_TOOLS" \
     -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" "$IMAGENAME:$tag" "$@"
 
