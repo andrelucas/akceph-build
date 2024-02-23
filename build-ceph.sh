@@ -26,6 +26,9 @@ Where:
         placed. Helpful if multiple builds are in progress.
     -R
         Pass options to _build-container.sh
+    -S CEPH_SRC
+        Override the source directory. This is where the Ceph source tree is
+        located.
 
 Anything after '--' is passed to the build script run in the container, which by
 default is tools/source-build.sh.
@@ -43,7 +46,7 @@ declare -a bcopt runopt
 bcopt=()
 runopt=()
 
-while getopts "Cio:s:r:R" o; do
+while getopts "Cio:s:r:RS:" o; do
     case "${o}" in
         C)
             skip_clean=1
@@ -68,6 +71,14 @@ while getopts "Cio:s:r:R" o; do
             ;;
         R)
             bcopt+=(-R)
+            ;;
+        S)
+            CEPH_SRC="$(realpath "$OPTARG")"
+            if [[ ! -f $CEPH_SRC/install-deps.sh ]]; then
+                echo "Source directory '$CEPH_SRC' does not contain install-deps.sh" >&2
+                exit 1
+            fi
+            echo "Override CEPH_SRC='$CEPH_SRC'"
             ;;
         *)
             usage
@@ -122,11 +133,14 @@ if [[ ! -f $CCACHE_CONF ]]; then
 fi
 
 # Create a preinstall environment that matches the one built into the base
-# image. This allows multiple versions of the base image.
-build_preinstall "$tmpdir/preinstall" build-ceph
+# image. This allows multiple versions of the base image to match the
+# install-deps.sh and debian/ directories in the Ceph source tree.
+build_preinstall "$tmpdir/preinstall" build-ceph1
 pushd "$tmpdir"
-tag=$(hash_dir preinstall)
-echo "Run: Preinstall image tag: $tag"
+phash="$(hash_dir preinstall)"
+echo "Run: Preinstall hash: $phash"
+tag="$(imagetag_for_preinstall_hash "$phash")"
+echo "Run: Image tag: $tag"
 popd
 
 set -e

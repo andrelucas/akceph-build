@@ -1,8 +1,8 @@
 /preinstall
-/preinstall.lock
+/preinstall.*
 
 # This is your local configuration. Start by copying vars.sh.example.
-vars.sh
+/vars.sh
 
 /tmp.*
 
@@ -10,4 +10,4 @@ vars.sh
 /release_*
 
 # I use script(1) a lot when debugging Docker builds.
-typescript
+/typescript

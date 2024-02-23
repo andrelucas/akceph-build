@@ -15,20 +15,36 @@ function hash_dir() {
 }
 
 function build_preinstall() {
-    local PRE_DIR="$1" ROLE="$2"
-    if [[ -z "$PRE_DIR" || -z "$ROLE" ]]; then
-        echo "Usage: build_preinstall PRE_DIR ROLE" >&2
+    local pre_dir="$1"
+    local role="$2"
+    if [[ -z "$pre_dir" || -z "$role" ]]; then
+        echo "Usage: build_preinstall pre_dir role" >&2
         return 1
     fi
-    rm -rf "$PRE_DIR"
-    mkdir -p "$PRE_DIR"
-    echo "$ROLE: Construct preinstall environment in '$PRE_DIR' from '$CEPH_SRC'"
-    cp "$CEPH_SRC"/install-deps.sh "$PRE_DIR"
+    rm -rf "$pre_dir"
+    mkdir -p "$pre_dir"
+    echo "$role: Construct preinstall environment in '$pre_dir' from '$CEPH_SRC'"
+    cp "$CEPH_SRC"/install-deps.sh "$pre_dir"
     # Copy *only the git-tracked files* from the debian directory.
     pushd "$CEPH_SRC/debian" || exit 1
-    mkdir -p "$PRE_DIR/debian"
-    git ls-tree -r HEAD --name-only | xargs -I {} cp --parents {} "$PRE_DIR/debian"
+    mkdir -p "$pre_dir/debian"
+    git ls-tree -r HEAD --name-only | xargs -I {} cp --parents {} "$pre_dir/debian"
     popd || exit 1
+}
+
+function imagetag_for_preinstall_hash() {
+    local phash="$1"
+    local gitref
+    if [[ -z "$phash" ]]; then
+        echo "Usage: imagetag_for_preinstall_hash PREINSTALL_HASH" >&2
+        return 1
+    fi
+    gitref="$(git rev-parse --short HEAD)"
+    if [[ -z "$gitref" ]]; then
+        echo "Failed to get git ref" >&2
+        return 1
+    fi
+    echo "${gitref}-${phash}"
 }
 
 # Silence pushd/popd output. Most of the time it's just noise.
