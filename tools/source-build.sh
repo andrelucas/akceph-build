@@ -191,10 +191,12 @@ if [[ $use_envfile -eq 1 ]]; then
 fi
 
 function old_debbuild() {
-    # The debian build switches to GNU Make, so we have to be careful how much
-    # parallelism we ask for.
-    # The first parameter is the base directory for the built images (it
-    # defaults to /tmp/release).
+    echo "Clearing release output directory '$RELEASE_DIR'"
+    find "$RELEASE_DIR" -mindepth 1 -delete
+    # The Debian build switches to GNU Make, so we have to be careful how much
+    # parallelism we ask for - Ninja deliberately limits it based on RAM. The
+    # first parameter to make_debs.sh is the base directory for the built
+    # images (it defaults to /tmp/release).
     env DEB_BUILD_OPTIONS="parallel=$BUILD_NPROC $deb_build_options" ./make-debs.sh /release "$@"
 }
 
