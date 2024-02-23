@@ -153,7 +153,4 @@ $DOCKER run \
     -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" "$IMAGENAME:$tag" "$@"
 
-# WORKDIR is disposable, and can be large.
-rm -rf "$RELEASE_DIR"/Ubuntu/WORKDIR
-
 exit 0
