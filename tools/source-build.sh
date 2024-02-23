@@ -191,8 +191,14 @@ if [[ $use_envfile -eq 1 ]]; then
 fi
 
 function old_debbuild() {
-    echo "Clearing release output directory"
-    find /release -mindepth 1 -delete
+    # There are too many possibilities to attempt to automatically clean up
+    # here. Just stop the build, and explain why.
+    if [[ -e /release/Ubuntu ]]; then
+        # The release directory might be different outside the container -
+        # don't guess.
+        echo "RELEASE_DIR/Ubuntu is present - will not overwrite" >&2
+        exit 1
+    fi
     # The Debian build switches to GNU Make, so we have to be careful how much
     # parallelism we ask for - Ninja deliberately limits it based on RAM. The
     # first parameter to make_debs.sh is the base directory for the built
