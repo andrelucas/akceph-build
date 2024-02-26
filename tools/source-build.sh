@@ -50,12 +50,6 @@ Where
     -x
         Build doxygen documentation. Builds into /src/build-doc, so will be visible
         outside the container.
-    -Z
-        Disable DWZ compression in Debian package builds. For production builds it
-        might be worth setting this, but be aware the dwz compression is extremely
-        slow, and will add a very long time to the build. (Only applies to Ceph
-        18 and later, earlier versions have debhelper version 9 - see debhelper(1)
-        for details.)
 
     NINJA_TARGET
         The target to build with Ninja (if run without -d, -D or -t), e.g. radosgwd
@@ -69,7 +63,6 @@ arch_set=1
 BUILD_TYPE=RelWithDebInfo
 deb_build_options=""
 debbuild=0
-disable_dwz=1
 doxygen=0
 linker_override=1
 nobuild=0
@@ -82,7 +75,7 @@ with_ccache=1
 declare -a cmake_opts
 cmake_opts=()
 
-while getopts "Ab:c:CdDEhj:LnO:RtxZ" o; do
+while getopts "Ab:c:CdDEhj:LnO:Rtx" o; do
     case "${o}" in
         A)
             arch_set=0
@@ -141,9 +134,6 @@ while getopts "Ab:c:CdDEhj:LnO:RtxZ" o; do
         x)
             doxygen=1
             ;;
-        Z)
-            disable_dwz=0
-            ;;
         *)
             usage
             ;;
@@ -189,29 +179,6 @@ if [[ $rocksdb_portable -eq 0 ]]; then
     # Note this will get undone by the Debian build - it will need to be
     # patched in if we want it in the dpkgs.
     sed -i -e 's/\(rocksdb_CMAKE_ARGS -DPORTABLE=\)ON/\1OFF/' /src/cmake/modules/BuildRocksDB.cmake
-fi
-
-if [[ $disable_dwz -eq 1 ]]; then
-    dh_version="$(cat /src/debian/compat)"
-    if [[ -z "$dh_version" ]]; then
-        # Something's very wrong.
-        echo "Failed to get debhelper version" >&2
-        exit 1
-    fi
-    if [[ $dh_version -ge 12 ]]; then
-        if ! grep -E -q '^\s*override_dh_dwz\s*:\s*$' /src/debian/rules; then
-            # Disable DWZ compression. This is performed late in the build and
-            # takes a very long time.
-            echo "Disabling DWZ compression for debhelper version $dh_version"
-            pushd /src
-            patch -p1 </tools/ceph-debian-rules-disable-dwz.patch
-            popd
-        else
-            echo "DWZ patch appears to be already applied"
-        fi
-    else
-        echo "Not disable DWZ for debhelper version $dh_version"
-    fi
 fi
 
 # Pull in the envfile if requested. This is completely unsafe; the envfile
