@@ -280,5 +280,5 @@ else
     srcbuild "$@"
 fi
 
-echo "$SCRIPTNAME: Done"
+echo "$SCRIPTNAME: Done (exit status $?)"
 exit 0

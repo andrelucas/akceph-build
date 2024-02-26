@@ -164,5 +164,5 @@ $DOCKER run \
     -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" "$IMAGENAME:$tag" "$@"
 
-echo "$SCRIPTNAME: Done"
+echo "$SCRIPTNAME: Done (exit status $?)"
 exit 0
