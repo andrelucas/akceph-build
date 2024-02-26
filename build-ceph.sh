@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
+SCRIPTNAME="$(basename "$0")"
 
 set -e
 # shellcheck source=vars.sh.example
@@ -163,4 +164,5 @@ $DOCKER run \
     -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" "$IMAGENAME:$tag" "$@"
 
+echo "$SCRIPTNAME: Done"
 exit 0

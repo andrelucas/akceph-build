@@ -6,6 +6,7 @@
 FLAG_M_ARCH="-march=znver2"
 
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
+SCRIPTNAME="$(basename "$0")"
 
 function usage() {
     cat <<EOF
@@ -204,10 +205,12 @@ function old_debbuild() {
     # first parameter to make_debs.sh is the base directory for the built
     # images (it defaults to /tmp/release).
     env DEB_BUILD_OPTIONS="parallel=$BUILD_NPROC $deb_build_options" ./make-debs.sh /release "$@"
+    echo "make-debs.sh exit code $?"
 }
 
 function debbuild() {
     env DEB_BUILD_OPTIONS="parallel=$BUILD_NPROC $deb_build_options" dpkg-buildpackage -uc -us "$@"
+    echo "dpkg-buildpackage exit code $?"
 }
 
 # Run CMake (via do_cmake.sh) and cd to the build directory.
@@ -277,4 +280,5 @@ else
     srcbuild "$@"
 fi
 
+echo "$SCRIPTNAME: Done"
 exit 0
