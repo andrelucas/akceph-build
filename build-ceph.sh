@@ -38,6 +38,7 @@ EOF
 }
 
 interactive=0
+releasedir_set=0
 skip_clean=0
 source_branch="NOTSET"
 source_checkout=0
@@ -61,6 +62,14 @@ while getopts "Cio:s:r:RS:" o; do
         s)
             source_checkout=1
             source_branch="$OPTARG"
+            echo "Using source branch '$source_branch'"
+            if [[ $releasedir_set -ne 1 ]]; then
+                # Auto-set the release directory to match the source branch,
+                # after transforming the source branch to a valid directory name.
+                auto_reldir="release_$OPTARG"
+                RELEASE_DIR="$(realpath "$(ref_to_folder "$auto_reldir")")"
+                echo "Auto-set RELEASE_DIR='$RELEASE_DIR'"
+            fi
             ;;
         r)
             # Use realpath(1) to resolve to a full pathname. `docker run`
@@ -68,6 +77,7 @@ while getopts "Cio:s:r:RS:" o; do
             RELEASE_DIR="$(realpath "$OPTARG")"
             mkdir -p "$RELEASE_DIR" || (echo "Failed to create '$RELEASE_DIR'" >&2; exit 1)
             echo "Override RELEASE_DIR='$RELEASE_DIR'"
+            releasedir_set=1
             ;;
         R)
             bcopt+=(-R)

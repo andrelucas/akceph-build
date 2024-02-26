@@ -63,14 +63,17 @@ $ ./build-ceph.sh -s v18.2.1
 # release_v18.2.1 subdirectory on completion. (It's useful to be able to
 # change the output directory in the case of multiple builds out of the same
 # working copy.)
-$ ./build-ceph.sh -s v18.2.1 -r release_v18.2.1 -- -D
+$ ./build-ceph.sh -s v18.2.1 -- -D
+
+# You can override the Debian output directory if you prefer.
+$ ./build-ceph.sh -s v18.2.1 -r release_foo -- -D
 
 # Get an interactive shell on the build container (existing source).
 $ ./build-ceph.sh -i
 
 # Same, but with a clean clone. The clone will be in a tmp. subdirectory, and
 # the script may not be able to delete it if running as non-root.
-$ ./build-ceph.sh -i -s v17.2.7 -d release_v17.2.7
+$ ./build-ceph.sh -i -s v17.2.7
 
 # Run a Debug build in build.Debug/bin. I recommend a preexisting source
 # tree if you're debugging, otherwise it's going to be very tiresome to
@@ -95,10 +98,10 @@ $ ./build-ceph.sh -- -d -- --build=binary
 # Both debian builds take the -o option to set DEB_BUILD_OPTIONS.
 $ ./build-ceph.sh -- -d -O "nostrip"
 # Of course these can be combined.
-$ ./build-ceph.sh -- -d -O "nostrip" -- --build-binary
+$ ./build-ceph.sh -- -D -O "nostrip" -- --build-binary
 
 # Run the unit tests. This is unreliable, because the unit tests are
-#  unreliable.
+# themselves unreliable.
 $ ./build-ceph.sh -- -t
 
 # Build the doxygen docs.

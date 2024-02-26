@@ -47,6 +47,24 @@ function imagetag_for_preinstall_hash() {
     echo "${gitref}-${phash}"
 }
 
+# Take a git ref name (typically a tag or branch name) and construct a valid
+# UNIX directory name from it.
+function ref_to_folder() {
+    local inpath="$1"
+    local outpath
+    if [[ -z "$inpath" ]]; then
+        echo "Usage: ref_to_folder INPATH" >&2
+        return 1
+    fi
+    # Transform non-alphanumerics to '_', then collapse repeated underscores
+    # to singles. Remove a trailing underscore.
+    outpath="$(echo -n "$inpath" | tr -c -- '-.,[:alnum:]' _ | tr -s '_' | sed -e 's/_$//')"
+    if [[ $inpath != "$outpath" ]]; then
+        echo "Notice: Transformed ref '$inpath' to directory '$outpath'" >&2
+    fi
+    echo "$outpath"
+}
+
 # Silence pushd/popd output. Most of the time it's just noise.
 pushd () {
     command pushd "$@" > /dev/null || exit
