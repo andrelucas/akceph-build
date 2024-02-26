@@ -276,3 +276,5 @@ elif [[ $debbuild -eq 1 ]]; then
 else
     srcbuild "$@"
 fi
+
+exit 0
