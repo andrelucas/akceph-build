@@ -9,7 +9,7 @@ source "$SCRIPTDIR/vars.sh"
 source "$SCRIPTDIR/lib.sh"
 
 tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
-trap 'rm -rf $tmpdir >/dev/null 2>&1' EXIT
+trap 'rm -rf $tmpdir >/dev/null 2>&1 || true' EXIT
 
 function usage() {
     cat >&2 <<EOF
@@ -164,5 +164,5 @@ $DOCKER run \
     -e "CCACHE_DIR=$C_CCACHE" \
     "${runopt[@]}" "$IMAGENAME:$tag" "$@"
 
-echo "$SCRIPTNAME: Done (exit status $?)"
+echo "$SCRIPTNAME: Done"
 exit 0
