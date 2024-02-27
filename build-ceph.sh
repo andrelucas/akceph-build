@@ -125,7 +125,9 @@ else
     CEPH_SRC="$tmpdir/src"
     echo "Cloning '$CEPH_GIT' branch '$source_branch' to '$CEPH_SRC'"
     # Let the build sdo the submodule update. We can't do a shallow submodule
-    # fetch, that breaks it.
+    # fetch, that breaks it. We can't do a --depth=1 shallow clone of the
+    # toplevel because this breaks `make-dist` in the Ceph repo, which uses
+    # `git describe` and needs some history.
     git clone \
         -c advice.detachedHead=false \
         -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
