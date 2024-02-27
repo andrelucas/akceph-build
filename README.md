@@ -4,7 +4,7 @@
 * [tl;dr](#tldr)
 * [Recommended use](#Recommendeduse)
 	* [Warning for Debian builds](#WarningforDebianbuilds)
-* [Overview](#Overview)
+* [Details](#Details)
 	* [Build image](#Buildimage)
 		* [Container builds for the uninitiated](#Containerbuildsfortheuninitiated)
 		* [Details of the build process.](#Detailsofthebuildprocess.)
@@ -234,12 +234,18 @@ Note that anything involving `-D` or `-d` (Debian builds) will *trash*
 anything non-standard in your working copy! Commit (and ideally push) anything
 in your local working copy before doing this, or you'll lose it. I mean it.
 
-## <a name='Overview'></a>Overview
+## <a name='Details'></a>Details
 
-This is designed to be a mltiuser build image that can be run by multiple
-users simultaneously without problems, so long as the users are using separate
+This is designed to be a build tool that can be run by multiple users
+simultaneously without problems, so long as the users are using separate
 working copies. (It won't work if you do multiple builds from the same
 checked-out source - sorry.)
+
+If you're building Debian packages from a git reference rather than a working
+copy, you can have as many concurrent builds as you like if and only if
+their outputs are to a separate release directory. FWIW I recommend using a CI
+system that does a separate clone for each simultaneous build because it makes
+everything simpler to understand.
 
 ### <a name='Buildimage'></a>Build image
 
@@ -255,7 +261,7 @@ A few notes for anyone not used to building in Docker containers.
 It's important to know the difference between the build image and the
 build container. The build image is a pre-built set of commands and
 configuration layers used to save time when starting a container. The build
-image is constructed using a `Dockerfile` and is configued by the
+image is constructed using a `Dockerfile` and is configured by the
 `build-container.sh` script. This is run automatically by `build-ceph.sh` so
 unless you're working on the build image you don't normally need to run it yourself.
 
@@ -284,8 +290,8 @@ used to it.
 
 Note, however, that we're mounting the source code into the container, so
 anything you change in the source tree you mount in will persist after the
-container has stopped. For example, a Debian build will *wipe* any deviations
-from the working copy as seen by Git. Commit your changes before doing a
+container has stopped. For example, a Debian build will *wipe* any files
+from the working copy not seen by Git. Commit your changes before doing a
 Debian build!
 
 #### <a name='Detailsofthebuildprocess.'></a>Details of the build process.
@@ -308,6 +314,10 @@ compilation steps can be skipped.
 However, if you change the deps stage in the Dockerfile or anything in the
 `build/` directory, the deps stage will be rebuilt too.
 
+Multistage Dockerfiles keep potentially complicated dependency chains together
+without too much extra effort. In the past the same result would have been
+achieved by having multiple Dockerfiles. It's more convenient this way.
+
 #### <a name='Binarydependencycompilationandinstall'></a>Binary dependency compilation and install
 
 Scripts in `build/` are run to configure various dependencies. Most are
@@ -322,9 +332,10 @@ configured via `config.env`.
 | `grpc.sh` | grpc | The Ceph build CMake | Google gRPC C++ libraries and tools. |
 | `openssl3.sh` | OpenSSL 3.x | Nothing yet | A recent version of OpenSSL. |
 
-These are scripts that can do anything in the build environment. If we at some
-point decide to use e.g. Artifactory for the binaries for these things, the
-scripts can use the cli tools to pull them into the build image here.
+These are simple, standalone scripts that can do anything they like in the
+build environment. If we at some point decide to use e.g. Artifactory for the
+binaries for these things, the scripts can use the cli tools to pull them into
+the build image here.
 
 #### <a name='install-deps.shandmultipleversions'></a>`install-deps.sh` and multiple versions
 
@@ -339,7 +350,20 @@ scripts will automatically select the correct image, with `install-deps.sh`
 pre-run. This is significant; the deps installer script is very slow, and for
 an incremental build cycle it would be an intolerable nuisance.
 
-The build image is configured to run a source build script by default.
+##### Adding inputs to the preinstall checksum
+
+Currently the checksum is just over `install-deps.sh` and the `debian/`
+toplevel source folder. This is actually incomplete; `install-deps.sh` calls
+`make-dist` and uses `bin/git-archive-all.sh`. These in turn can call out to
+other items.
+
+The process of checksumming `install-deps.sh` and its dependencies is a safety
+feature, so it needs to detect changes in the source. I don't expect us to
+change these items much, but if we do change them they need to be featured in
+the checksum calculation somehow.
+
+There's one function in `lib.sh` that handles the checksum calculation, used
+by both `build-ceph.sh` and `_build-container.sh`. Adding files is straightforward.
 
 #### <a name='install-deps.shspeedhack'></a>`install-deps.sh` speed hack
 
@@ -399,6 +423,10 @@ script.)
 
 `source-build.sh` takes many options, but most are fairly niche. The `-h` help
 explains what each option does, and the examples above should help.
+
+Once in an interactive shell, it's often useful to run
+`/tools/source-build.sh` yourself. It has help (`-h`) and you'll find lots of
+examples above.
 
 ## <a name='Notes'></a>Notes
 
