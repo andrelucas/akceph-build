@@ -126,7 +126,7 @@ else
     echo "Cloning '$CEPH_GIT' branch '$source_branch' to '$CEPH_SRC'"
     # Let the build sdo the submodule update. We can't do a shallow submodule
     # fetch, that breaks it.
-    git clone --depth 1 \
+    git clone \
         -c advice.detachedHead=false \
         -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
 fi
