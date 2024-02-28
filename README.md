@@ -228,6 +228,14 @@ probably have run `install-deps.sh` in the host) before this will work.
 For **standard builds**, do `./build-ceph -s TAG -- -D`. This will clone Ceph,
 set up the environment, run `make_debs.sh` and build Debian packages.
 
+### Source changes and Debian builds
+
+The Debian build process for `-D` builds, involving `make-debs.sh`, means that
+you can't just change the source tree without committing and expect the change
+to be reflected in the build. `make-debs.sh` uses `git archive` to essentially
+copy the source tree to the release directory, and this will ignore working
+copy changes that aren't committed.
+
 ### <a name='WarningforDebianbuilds'></a>Warning for Debian builds
 
 Note that anything involving `-D` or `-d` (Debian builds) will *trash*
