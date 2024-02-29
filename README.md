@@ -3,6 +3,7 @@
 <!-- vscode-markdown-toc -->
 * [tl;dr](#tldr)
 * [Recommended use](#Recommendeduse)
+	* [Source changes and Debian builds](#SourcechangesandDebianbuilds)
 	* [Warning for Debian builds](#WarningforDebianbuilds)
 * [Details](#Details)
 	* [Build image](#Buildimage)
@@ -74,6 +75,11 @@ $ ./build-ceph.sh -i
 # Same, but with a clean clone. The clone will be in a tmp. subdirectory, and
 # the script may not be able to delete it if running as non-root.
 $ ./build-ceph.sh -i -s v17.2.7
+
+# Same, but push the Docker build image to the remote repository for others
+# to use. You will probably have to log in to the remote repository for this
+# to work, and that's outside the scope of this tool.
+$ ./build-ceph.sh -p -i -s v18.2.1
 
 # Run a Debug build in build.Debug/bin. I recommend a preexisting source
 # tree if you're debugging, otherwise it's going to be very tiresome to
@@ -228,7 +234,7 @@ probably have run `install-deps.sh` in the host) before this will work.
 For **standard builds**, do `./build-ceph -s TAG -- -D`. This will clone Ceph,
 set up the environment, run `make_debs.sh` and build Debian packages.
 
-### Source changes and Debian builds
+### <a name='SourcechangesandDebianbuilds'></a>Source changes and Debian builds
 
 The Debian build process for `-D` builds, involving `make-debs.sh`, means that
 you can't just change the source tree without committing and expect the change
