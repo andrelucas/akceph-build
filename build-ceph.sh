@@ -151,12 +151,19 @@ tag="$(imagetag_for_preinstall_hash "$phash")"
 echo "Run: Image tag: $tag"
 popd
 
-# Rely on Docker and this script to not rebuild from scratch. Note the '-n',
-# so the environment doesn't get reloaded.
+# If the image can't be pulled from remote, rely on Docker and this script to
+# not rebuild from scratch. Note the '-n', so the environment doesn't get
+# reloaded.
 $DOCKER pull "$IMAGENAME:$tag" || ./_build-container.sh -n "${bcopt[@]}"
+# Attempt to push if enabled, and if the name looks like a remote image (i.e.
+# it contains at least one slash).
 if [[ $push_image -eq 1 ]]; then
-    echo "Attempting to push $IMAGENAME:$tag to remote registry"
-    $DOCKER push "$IMAGENAME:$tag" || echo "Failed to push image, continuing" >&2
+    if [[ "$IMAGENAME" == */* ]]; then
+        echo "Attempting to push $IMAGENAME:$tag to remote registry"
+        $DOCKER push "$IMAGENAME:$tag" || echo "Failed to push image, continuing" >&2
+    else
+        echo "Not pushing local image $IMAGENAME:$tag"
+    fi
 fi
 
 # Make sure the ccache configuration is sane.
