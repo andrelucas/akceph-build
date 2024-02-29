@@ -155,7 +155,7 @@ popd
 # so the environment doesn't get reloaded.
 $DOCKER pull "$IMAGENAME:$tag" || ./_build-container.sh -n "${bcopt[@]}"
 if [[ $push_image -eq 1 ]]; then
-    $DOCKER push "$IMAGENAME:$tag"
+    $DOCKER push "$IMAGENAME:$tag" || echo "Failed to push image, continuing" >&2
 fi
 
 # Make sure the ccache configuration is sane.
