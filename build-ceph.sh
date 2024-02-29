@@ -22,6 +22,9 @@ Where:
         Start an interactive shell in the container.
     -o
         Pass additional options to 'docker run'.
+    -p
+        Attempt to push the Docker image to the registry. You may need to log into
+        the registry to do this, and this script will not help you with that.
     -r RELEASE_DIR
         Override the release directory. This is where the build artifacts will be
         placed. Helpful if multiple builds are in progress.
@@ -39,6 +42,7 @@ EOF
 }
 
 interactive=0
+push_image=0
 releasedir_set=0
 skip_clean=0
 source_branch="NOTSET"
@@ -48,7 +52,7 @@ declare -a bcopt runopt
 bcopt=()
 runopt=()
 
-while getopts "Cio:s:r:RS:" o; do
+while getopts "Cio:pr:Rs:S:" o; do
     case "${o}" in
         C)
             skip_clean=1
@@ -71,6 +75,9 @@ while getopts "Cio:s:r:RS:" o; do
                 RELEASE_DIR="$(realpath "$(ref_to_folder "$auto_reldir")")"
                 echo "Auto-set RELEASE_DIR='$RELEASE_DIR'"
             fi
+            ;;
+        p)
+            push_image=1
             ;;
         r)
             # Use realpath(1) to resolve to a full pathname. `docker run`
@@ -133,18 +140,6 @@ else
         -b "$source_branch" "$CEPH_GIT" "$tmpdir"/src
 fi
 
-# Rely on Docker and this script to not rebuild from scratch. Note the '-n',
-# so the environment doesn't get reloaded.
-./_build-container.sh -n "${bcopt[@]}"
-
-# Make sure the ccache configuration is sane.
-if [[ ! -d $CCACHE_DIR ]]; then
-    mkdir -p "$CCACHE_DIR"
-fi
-if [[ ! -f $CCACHE_CONF ]]; then
-    install tools/ccache.conf "$CCACHE_CONF"
-fi
-
 # Create a preinstall environment that matches the one built into the base
 # image. This allows multiple versions of the base image to match the
 # install-deps.sh and debian/ directories in the Ceph source tree.
@@ -155,6 +150,21 @@ echo "Run: Preinstall hash: $phash"
 tag="$(imagetag_for_preinstall_hash "$phash")"
 echo "Run: Image tag: $tag"
 popd
+
+# Rely on Docker and this script to not rebuild from scratch. Note the '-n',
+# so the environment doesn't get reloaded.
+$DOCKER pull "$IMAGENAME:$tag" || ./_build-container.sh -n "${bcopt[@]}"
+if [[ $push_image -eq 1 ]]; then
+    $DOCKER push "$IMAGENAME:$tag"
+fi
+
+# Make sure the ccache configuration is sane.
+if [[ ! -d $CCACHE_DIR ]]; then
+    mkdir -p "$CCACHE_DIR"
+fi
+if [[ ! -f $CCACHE_CONF ]]; then
+    install tools/ccache.conf "$CCACHE_CONF"
+fi
 
 set -e
 $DOCKER run \
