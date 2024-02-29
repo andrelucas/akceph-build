@@ -29,6 +29,7 @@ export DOCKER=docker
 # At some point this will stabilise and we will be able to use non-local
 # Docker images.
 export IMAGENAME=cbuild
+#export IMAGENAME=docker.io/andrelucas/akceph-build
 
 # This is the host directory containing tools scripts. These are mounted into
 # the container.
