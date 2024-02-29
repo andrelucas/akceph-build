@@ -155,6 +155,7 @@ popd
 # so the environment doesn't get reloaded.
 $DOCKER pull "$IMAGENAME:$tag" || ./_build-container.sh -n "${bcopt[@]}"
 if [[ $push_image -eq 1 ]]; then
+    echo "Attempting to push $IMAGENAME:$tag to remote registry"
     $DOCKER push "$IMAGENAME:$tag" || echo "Failed to push image, continuing" >&2
 fi
 
