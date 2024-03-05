@@ -5,6 +5,7 @@
 * [Recommended use](#Recommendeduse)
 	* [Source changes and Debian builds](#SourcechangesandDebianbuilds)
 	* [Warning for Debian builds](#WarningforDebianbuilds)
+* [Smoke tests](#Smoketests)
 * [Details](#Details)
 	* [Build image](#Buildimage)
 		* [Container builds for the uninitiated](#Containerbuildsfortheuninitiated)
@@ -65,6 +66,10 @@ $ ./build-ceph.sh -s v18.2.1
 # change the output directory in the case of multiple builds out of the same
 # working copy.)
 $ ./build-ceph.sh -s v18.2.1 -- -D
+
+# Run Debian package smoke tests on the release you built in the previous
+# command.
+$ ./run_tests.sh release_v18.2.1
 
 # You can override the Debian output directory if you prefer.
 $ ./build-ceph.sh -s v18.2.1 -r release_foo -- -D
@@ -247,6 +252,11 @@ copy changes that aren't committed.
 Note that anything involving `-D` or `-d` (Debian builds) will *trash*
 anything non-standard in your working copy! Commit (and ideally push) anything
 in your local working copy before doing this, or you'll lose it. I mean it.
+
+## <a name='Smoketests'></a>Smoke tests
+
+Some simple package smoke tests are available. See
+[README-tests.ms](README-tests.md) for more information.
 
 ## <a name='Details'></a>Details
 
