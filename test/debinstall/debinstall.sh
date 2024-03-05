@@ -8,7 +8,8 @@ set -e
 
 function get_release_var() {
     local varname="$1"
-    local val="$(grep "^$varname=" /etc/os-release | cut -d'=' -f2)"
+    local val
+    val="$(grep "^$varname=" /etc/os-release | cut -d'=' -f2)"
     if [[ -z $val ]]; then
         echo "Could not find $varname in /etc/os-release" >&2
         exit 1
