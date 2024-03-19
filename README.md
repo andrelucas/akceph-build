@@ -74,7 +74,13 @@ $ ./build-ceph.sh -s v18.2.1 -- -D
 $ ./run_tests.sh release_v18.2.1
 
 # Build an Ubuntu-based Docker image with the Debian packages installed. This
-# is intended for use by the gen2 team, and simply installs the packages into # a base container, ready for configuration and use.
+# is intended for use by the gen2 team, and simply installs the packages into
+# a base container, ready for configuration and use.
+#
+# The TMPDIR incantation is so we don't fill the tiny /tmp on the big lab
+# build machine.
+#
+$ mkdir -p ~/tmp; export TMPDIR=~/tmp
 $ ./dockerimage.sh release_v18.2.1
 
 # Specify the tag for the Docker image. Note you'll get two images, one with
