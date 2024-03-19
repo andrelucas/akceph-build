@@ -49,6 +49,14 @@ done
 shift $((OPTIND-1))
 
 if [[ $squash -eq 1 ]]; then
+    # We can't reliably install things using pip, so just insist someone's
+    # done the work if we're in squash mode.
+    if ! command -v docker-squash >/dev/null; then
+        echo "Squash mode is enabled, but docker-squash not found. Install it, or use -S." >&2
+        exit 1
+    fi
+fi
+if [[ $squash -eq 1 ]]; then
     runtag="$tag-squashed"
 else
     runtag="$tag"
@@ -81,9 +89,7 @@ set -x
 $DOCKER build -t "$UBIMAGE":"$tag" -f "Dockerfile" .
 set +x
 
-
 if [[ $squash -eq 1 ]]; then
-    pip3 install docker-squash
     docker-squash -f $(($(docker history "$UBIMAGE:$tag" | wc -l | xargs)-1)) -t "${UBIMAGE}:${tag}-squashed" "${UBIMAGE}:${tag}"
 else
     $DOCKER image rm "${UBIMAGE}:${tag}-squashed" || true
