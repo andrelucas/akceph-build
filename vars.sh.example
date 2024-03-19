@@ -31,6 +31,10 @@ export DOCKER=docker
 export IMAGENAME=cbuild
 #export IMAGENAME=docker.io/andrelucas/akceph-build
 
+# The name of the Ubuntu-based container.
+#export UBIMAGE=akceph-ubuntu
+export UBIMAGE=docker.io/andrelucas/akceph-ubuntu
+
 # This is the host directory containing tools scripts. These are mounted into
 # the container.
 export TOOLS_SRC=$PWD/tools

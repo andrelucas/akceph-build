@@ -29,7 +29,9 @@
 
 This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
 generated binaries suitable for running on systems we have, natively or in a
-container. It also builds standard Debian packages.
+container. It can do a 'source only' build, it can build the standard Debian
+packages, and it can build a bare-bones Ubuntu-based Docker image suitable for
+use by the Gen2 team.
 
 This is a container with a standard (Ceph version-dependent) build image that
 you can use to build standard packages, but can also use as a playground. In
@@ -70,6 +72,16 @@ $ ./build-ceph.sh -s v18.2.1 -- -D
 # Run Debian package smoke tests on the release you built in the previous
 # command.
 $ ./run_tests.sh release_v18.2.1
+
+# Build an Ubuntu-based Docker image with the Debian packages installed. This
+# is intended for use by the gen2 team, and simply installs the packages into # a base container, ready for configuration and use.
+$ ./dockerimage.sh release_v18.2.1
+
+# Specify the tag for the Docker image. Note you'll get two images, one with
+# the named tag, and another with '-squashed' appended. The former is a
+# regular multi-layer Docker image, the latter is a single-layer reduction of
+# the former (using docker-squash).
+$ ./dockerimage.sh -t v18.2.1 release_v18.2.1
 
 # You can override the Debian output directory if you prefer.
 $ ./build-ceph.sh -s v18.2.1 -r release_foo -- -D
