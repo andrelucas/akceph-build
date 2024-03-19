@@ -71,8 +71,9 @@ if [[ ! -d "$real_releasedir/Ubuntu/pool" ]]; then
     exit 1
 fi
 
-# Copy the release to a known location relative to the Dockerfile.
-rsync -avP --delete "$real_releasedir"/ "$BUILD_RELEASEDIR"
+# Copy the release to a known location relative to the Dockerfile. Don't copy
+# WORKDIR; that's where it was built, and we don't need it in the image.
+rsync -avP --delete --exclude WORKDIR "$real_releasedir"/ "$BUILD_RELEASEDIR"
 
 set -e
 
