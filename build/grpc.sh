@@ -39,7 +39,7 @@ rm -rf build
 mkdir -p build
 cd build
 declare -a disable_plugins; disable_plugins=()
-for p in CSHARP NODE OBJECTIVE_C PHP PYTHON RUBY; do disable_plugins+=("-DgRPC_BUILD_GRPC_${p}_PLUGIN=OFF"); done
+for p in CSHARP NODE OBJECTIVE_C PHP RUBY; do disable_plugins+=("-DgRPC_BUILD_GRPC_${p}_PLUGIN=OFF"); done
 
 env CXX="g++" "CXXFLAGS=-march=$AKCEPH_GCC_TARGET_ARCH" \
     cmake -GNinja \
