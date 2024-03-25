@@ -30,6 +30,9 @@ Where:
         placed. Helpful if multiple builds are in progress.
     -R
         Pass options to _build-container.sh
+    -s BRANCH
+        Source checkout mode. Check out the named branch, defaulting the release
+        directory to release_BRANCH (can be overridden with -r).
     -S CEPH_SRC
         Override the source directory. This is where the Ceph source tree is
         located.
