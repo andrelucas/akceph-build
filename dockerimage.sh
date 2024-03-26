@@ -3,10 +3,6 @@
 # Run a container to test that the generated packages can be successfully
 # installed in a fresh Ubuntu system.
 
-# Run from the top level of akceph-build with
-# `test/debinstall/test_debinstall.sh -i` to get an interactive shell on the
-# test container, instead of running /debinstall.sh as the entrypoint.
-
 TOPDIR="$(realpath "$(dirname "$0")")"
 BUILDDIR="$TOPDIR/ubuntu-container"
 BUILD_RELEASEDIR="$BUILDDIR/release"
