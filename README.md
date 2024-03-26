@@ -274,7 +274,7 @@ in your local working copy before doing this, or you'll lose it. I mean it.
 ## <a name='Smoketests'></a>Smoke tests
 
 Some simple package smoke tests are available. See
-[README-tests.ms](README-tests.md) for more information.
+[README-tests.md](README-tests.md) for more information.
 
 ## <a name='Details'></a>Details
 
