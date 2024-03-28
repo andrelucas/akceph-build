@@ -8,6 +8,8 @@
 
 # By convention, releases go in directories starting with release_.
 /release_*
+# Likewise, RPM builds go here by convention.
+/rpmbuild_*
 
 # I use script(1) a lot when debugging Docker builds.
 /typescript

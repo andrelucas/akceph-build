@@ -19,6 +19,9 @@ export CEPH_SRC=~/git/ceph
 # This is where releases will be put by dpkg-buildpackage.
 export RELEASE_DIR=$PWD/release
 
+# This is the toplevel rpmbuild directory that will be mounted into the image.
+export RPMBUILD_DIR=$PWD/rpmbuild
+
 ##
 ## You probably shouldn't change values below this point.
 ##
@@ -35,6 +38,10 @@ export IMAGENAME=cbuild
 #export UBIMAGE=akceph-ubuntu
 export UBIMAGE=docker.io/andrelucas/akceph-ubuntu
 
+# The name of the Centos-based container.
+export CENTOSIMAGE=akceph-centos
+#export CENTOSIMAGE=docker.io/andrelucas/akceph-centos
+
 # This is the host directory containing tools scripts. These are mounted into
 # the container.
 export TOOLS_SRC=$PWD/tools
@@ -45,3 +52,4 @@ export C_CCACHE=/ccache
 export C_RELEASE=/release
 export C_SRC=/src
 export C_TOOLS=/tools
+export C_RPMBUILD=/root/rpmbuild

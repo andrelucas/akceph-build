@@ -65,6 +65,21 @@ function ref_to_folder() {
     echo "$outpath"
 }
 
+function tag_for_local_head() {
+    git rev-parse --short HEAD
+}
+
+# Create a tag name using the hash for a given branch of a given repo.
+function tag_for_remote_branch() {
+    local repo="$1"
+    local branch="$2"
+    if [[ -z "$repo" || -z "$branch" ]]; then
+        echo "Usage: tag_for_branch REPO BRANCH" >&2
+        return 1
+    fi
+    git ls-remote "$repo" | grep "refs/heads/$branch" | cut -f1 | cut -c1-7
+}
+
 # Silence pushd/popd output. Most of the time it's just noise.
 pushd () {
     command pushd "$@" > /dev/null || exit
