@@ -230,8 +230,18 @@ root@eb10eda81490:/src% /tools/source-build.sh \
   -c "-DCMAKE_LINKER=ld.gold" \
   -c "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"
 # etc.
-
 ```
+
+You can also build CentOS (Red Hat) RPMS from here. This will be useful for
+building standard containers for use with `cephadm` and Rook.
+
+```sh
+# Build CentOS RPMS and SRPMS for the given branch. The rpmbuild tree will be
+# placed in `rpmbuild_BRANCH`.
+$ ./rpm-build.sh -s v18.2.1
+```
+
+
 
 ## <a name='Recommendeduse'></a>Recommended use
 
