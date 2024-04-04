@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9 as deps
+FROM quay.io/centos/centos:stream8 as deps
 
 # Install the base system, plus everything we'll need to build our custom
 # dependencies. We'll reinstall a fresh image later on, you only need the
@@ -9,14 +9,19 @@ FROM quay.io/centos/centos:stream9 as deps
 # - grpc: openssl-dev (may change later), zlib-devel
 # - openssl3: nothing
 #
-RUN dnf install -y epel-release && \
-    dnf config-manager --set-enabled crb
+# 'powertools' is 'crb' in stream9.
+RUN dnf install -y dnf-plugins-core epel-release && \
+    dnf config-manager --set-enabled powertools
 # '--allowerasing' is necessary to allow dnf(8) to replace base image versions
 # of curl and coreutils with fuller versions.
+#
+# gcc-toolset-11 is what Ceph requires for v18. We also require a newer gcc to
+# support -march=znver2.
 RUN dnf group install --allowerasing -y \
         "Development Tools" && \
-    dnf install --allowerasing -y \
+        dnf install --allowerasing -y \
         cmake \
+        gcc-toolset-11 \
         libzstd-devel \
         ninja-build \
         openssl-devel \
@@ -28,6 +33,7 @@ RUN dnf group install --allowerasing -y \
 RUN mkdir -p /build
 COPY build/ /build/
 WORKDIR /build
+ENV PATH=/opt/rh/gcc-toolset-11/root/usr/bin:${PATH}
 RUN ./ccache.sh
 RUN ./golang.sh
 RUN ./abseil.sh
@@ -36,7 +42,7 @@ RUN ./grpc.sh
 
 # Main build image. Reinstall base system dependencies, copy custom
 # dependencies from the deps image, then clone and build Ceph SRPMS and RPMS.
-FROM quay.io/centos/centos:stream9 as build
+FROM quay.io/centos/centos:stream8 as build
 
 # Install ccache binary only.
 COPY --from=deps /usr/local/bin/ccache /usr/local/bin/ccache
@@ -48,8 +54,9 @@ COPY --from=deps /usr/local/go /usr/local/go
 COPY --from=deps /usr/local/grpc /usr/local/grpc
 COPY --from=deps /usr/local/openssl3 /usr/local/openssl3
 
-RUN dnf install -y epel-release && \
-    dnf config-manager --set-enabled crb
+# 'powertools' is 'crb' in stream9.
+RUN dnf install -y dnf-plugins-core epel-release && \
+    dnf config-manager --set-enabled powertools
 
 # '--allowerasing' is necessary to allow dnf(8) to replace base image versions
 # of curl and coreutils with fuller versions.
