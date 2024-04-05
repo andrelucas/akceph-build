@@ -141,5 +141,8 @@ docker run \
 
 # Clear down the BUILD/ part of the release tree, it's wasted space.
 # This stuff might be owned by root, so allow it to fail.
-rm -rf "$RPMBUILD_DIR"/BUILD/* 2>&1 | true
+rm -rf "$RPMBUILD_DIR"/BUILD 2>&1 | true
+if [[ -d "$RPMBUILD_DIR"/BUILD ]]; then
+	echo "BUILD dir exists in $RPMBUILD_DIR - you should delete it manually." >&2
+fi
 exit 0
