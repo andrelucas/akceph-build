@@ -16,6 +16,9 @@ function usage() {
     cat >&2 <<EOF
 Usage: $SCRIPTNAME [-h] [-- [OPTIONS-TO-BUILD-SCRIPT]]
 Where:
+    -C
+        Do not clone the source code. This is useful for debugging the build.
+        Implies -S and -R.
     -h
         Show this help message.
     -i
@@ -35,8 +38,6 @@ NOCLONE=0
 NORPMS=0
 NOSRPMS=0
 interactive=0
-
-set -x
 
 while getopts "CRhis:S" o; do
     case "${o}" in
