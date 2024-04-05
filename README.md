@@ -27,11 +27,17 @@
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
 
-This is a simple Dockerised Ceph build on an Ubuntu 20.04 base. This makes the
-generated binaries suitable for running on systems we have, natively or in a
-container. It can do a 'source only' build, it can build the standard Debian
-packages, and it can build a bare-bones Ubuntu-based Docker image suitable for
-use by the Gen2 team.
+This is a simple Dockerised Ceph build. Much of the tooling assumes an Ubuntu
+20.04 base, however there is also support for building to a CentOS base which
+is necessary for 'standard' Ceph containers.
+
+The Ubuntu base makes binaries suitable for running on systems we have,
+natively or in a container. It can do a 'source only' build, it can build the
+standard Debian packages, and it can build a bare-bones Ubuntu-based Docker
+image suitable for use by the Gen2 team.
+
+The CentOS build is documented [separately](README-centos.md), and shares only some configuration
+and standard scripts with the Ubuntu builds. Both build the same source trees.
 
 This is a container with a standard (Ceph version-dependent) build image that
 you can use to build standard packages, but can also use as a playground. In
@@ -46,10 +52,9 @@ and since Akamai is an Ubuntu house there's no clear incentive.
 A separate repository based on upstream code will build final containers for
 use external to the development team. This is a developer tool.
 
-## <a name='tldr'></a>tl;dr
+## <a name='tldr'></a>Example use
 
 ```sh
-
 # Copy the configuration file and customise for your setup. For standard
 # builds, this will likely not need any changes.
 $ cp vars.sh.example vars.sh

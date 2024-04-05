@@ -136,7 +136,7 @@ release_tag="${rpm_version}-${rpm_release}"
 cc_image_tag="${release_tag}-${ceph_majorversion_name}-centos-${CENTOS_STREAM_TAG}-$(arch)"
 
 cat <<EOF
-Extracted RPM versions:
+Package metadata:
   rpm_version=$rpm_version
   rpm_pkgrelease=$rpm_pkgrelease
   rpm_release=$rpm_release
