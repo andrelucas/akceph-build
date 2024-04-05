@@ -1,0 +1,12 @@
+# Gen2 ceph container image. Based on the upstream ceph/daemon image with
+# minor modifications.
+
+# Must be substituted with the built image name.
+FROM __BASE_IMAGE__
+
+# The steps below mean we can run the container as non-root
+RUN chown -R ceph:ceph /var/lib/ceph/radosgw
+USER ceph
+
+CMD = ["/bin/sh", "-c"]
+ENTRYPOINT ["/opt/ceph-container/bin/entrypoint.sh"]

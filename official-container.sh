@@ -5,8 +5,13 @@
 
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 SCRIPTNAME="$(basename "$0")"
-BUILDDIR="$SCRIPTDIR/official-build"
+OFFICIAL_BUILD_DIR="$SCRIPTDIR/official-build"
 CCDIR="$SCRIPTDIR/third_party/ceph-container"
+
+GEN2_IMAGE_NAME=akdaemon-gen2
+
+CENTOS_STREAM_VERSION=8
+CENTOS_STREAM_TAG="stream$CENTOS_STREAM_VERSION"
 
 set -e
 # shellcheck source=vars.sh.example
@@ -36,8 +41,13 @@ Where:
         Only run createrepo and start the web server, don't build the image.
     -h
         Show this help message.
+    -p PORT
+        The port to use for the web server. Default is a random port between
+        1024 and 49151.
     -r RPMBUILD_SRC
         The path to the RPM build source directory.
+    -u
+        Upload (push) generated images to the upstream container registry.
     -W 
         Persist the web server container after the script exits. This will
         leave the temporary directory and container in place!
@@ -47,10 +57,11 @@ EOF
 
 RPMBUILD_SRC=""
 createrepo_only=0
+upload=0
 webserver_persist=0
 webserver_port="$(shuf -i 1024-49151 -n 1)"
 
-while getopts "Chp:r:W" o; do
+while getopts "Chp:r:uW" o; do
     case "${o}" in
         C)
             createrepo_only=1
@@ -65,6 +76,9 @@ while getopts "Chp:r:W" o; do
         r)
             RPMBUILD_SRC="$(realpath "${OPTARG}")"
             echo "RPMBUILD_SRC: $RPMBUILD_SRC"
+            ;;
+        u)
+            upload=1
             ;;
         W)
             webserver_persist=1
@@ -81,6 +95,57 @@ if [ -z "$RPMBUILD_SRC" ]; then
     exit 1
 fi
 
+# Extract some version information (and invalidate bad directories in the
+# process).
+rpm_testfile=$(ls "$RPMBUILD_SRC"/RPMS/noarch/cephadm*.rpm)
+if [[ -z $rpm_testfile || ! -e "$rpm_testfile" ]]; then
+    echo "cephadm RPM not found in $RPMBUILD_SRC/RPMS/noarch" >&2
+    exit 1
+fi
+# rpm_version will be the Ceph version, e.g. 18.2.1.
+rpm_version=$(rpm -qp --queryformat '%{VERSION}' "$rpm_testfile")
+# This is the Ceph major version, e.g. 17 or 18.
+ceph_majorversion=$(echo "$rpm_version" | cut -d. -f1)
+
+# We need the text name for the Ceph release.
+ceph_majorversion_name=""
+case "$ceph_majorversion" in
+    17)
+        ceph_majorversion_name="quincy"
+        ;;
+    18)
+        ceph_majorversion_name="reef"
+        ;;
+    *)
+        echo "Unknown or unsupported Ceph major version '$ceph_majorversion'" >&2
+        exit 1
+        ;;
+esac
+
+# rpm_pkgrelease will be the 'sub-version', e.g. 35.g649cb767ced.el8 . This is
+# the automatically-generated release number from Ceph's build process (it
+# uses `git describe`). The RPM file has a platform suffix (e.g. '.el8').
+rpm_pkgrelease="$(rpm -qp --queryformat '%{RELEASE}' "$rpm_testfile")"
+# rpm_release is rpm_pkgrelease minus the platform suffix. In the example for
+# rpm_pkgrelease, this will be simply 35.g649cb767ced .
+# shellcheck disable=SC2001
+rpm_release="$(echo "$rpm_pkgrelease" | sed -E -e 's/.el[0-9]+$//')"
+# This is what we'll tag our container.
+release_tag="${rpm_version}-${rpm_release}"
+# The final tag used by ceph-container is computed.
+cc_image_tag="${release_tag}-${ceph_majorversion_name}-centos-${CENTOS_STREAM_TAG}-$(arch)"
+
+cat <<EOF
+Extracted RPM versions:
+  rpm_version=$rpm_version
+  rpm_pkgrelease=$rpm_pkgrelease
+  rpm_release=$rpm_release
+  release_tag=$release_tag
+  ceph_majorversion=$ceph_majorversion
+  ceph_majorversion_name=$ceph_majorversion_name
+  cc_image_tag=$cc_image_tag
+EOF
+
 # Copy the built RPMS and SRPMS to our temporary directory.
 repodir="$(realpath "$tmpdir"/yumrepo)"
 mkdir "$repodir"
@@ -89,6 +154,7 @@ pushd "$repodir"
 echo "Copying source RPMS and SRPMS to $(pwd)"
 rsync -a "$RPMBUILD_SRC"/RPMS "$RPMBUILD_SRC"/SRPMS .
 
+# Run createrepo_c on relevant directories.
 for d in RPMS/x86_64 RPMS/noarch SRPMS; do
     pushd $d
     echo "Creating Yum repo in $(pwd)"
@@ -96,6 +162,7 @@ for d in RPMS/x86_64 RPMS/noarch SRPMS; do
     popd
 done
 
+# Start a web server on the repos we just created.
 id="$(docker run -d -p "$webserver_port":80 -v "$repodir":/usr/share/nginx/html:ro --name "$tmpcontainer" nginx:alpine)"
 docker ps -f "id=$id"
 
@@ -116,9 +183,41 @@ popd
 # Use ceph-container to build the image, using the web server we just started.
 git submodule update --init
 pushd "$CCDIR"
-make FLAVORS=reef,centos,8 \
-    BASEOS_REGISTRY=quay.io/centos BASEOS_REPO=centos BASEOS_TAG=stream8 \
+# Clear down staging/ to avoid any confusion. Don't run 'clean.all', it
+# deletes images which might cause problems.
+rm -rf staging/*
+# Run a very, very specific build target.
+make FLAVORS="$ceph_majorversion_name",centos,"$CENTOS_STREAM_VERSION" \
+    RELEASE="$release_tag" \
+    TAG_REGISTRY="$CEPH_CONTAINER_REGISTRY" \
+    BASEOS_REGISTRY=quay.io/centos BASEOS_REPO=centos BASEOS_TAG="$CENTOS_STREAM_TAG" \
     CUSTOM_CEPH_YUM_REPO="$webserver_url" \
     build
+
+docker image ls -f 'reference=$release_tag'
+
+# Now we have three images, daemon-base, daemon, and demo. We want to take the
+# daemon image as the base for an image that gen2 will use.
+
+gen2_image_dir="$tmpdir/gen2-image"
+mkdir -p "$gen2_image_dir"
+pushd "$gen2_image_dir"
+daemon_image="$CEPH_CONTAINER_REGISTRY/daemon:$cc_image_tag"
+
+# Generate a Dockerfile for the gen2 image.
+sed \
+    -e "s#__BASE_IMAGE__#$daemon_image#g" \
+    "$OFFICIAL_BUILD_DIR"/Dockerfile.in >Dockerfile
+docker build -t "$CEPH_CONTAINER_REGISTRY/$GEN2_IMAGE_NAME:$cc_image_tag" .
+
+# Optionally push all the generated images.
+for img in daemon daemon-gen2 demo "$GEN2_IMAGE_NAME"; do
+    fqimg="$CEPH_CONTAINER_REGISTRY/$img:$cc_image_tag"
+    if [[ $upload -eq 1 ]]; then
+        docker push "$CEPH_CONTAINER_REGISTRY/$img:$cc_image_tag"
+    else
+        echo "Skipped push of $fqimg"
+    fi
+done
 
 exit 0

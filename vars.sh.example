@@ -42,12 +42,15 @@ export UBIMAGE=docker.io/andrelucas/akceph-ubuntu
 export CENTOSIMAGE=akceph-centos
 #export CENTOSIMAGE=docker.io/andrelucas/akceph-centos
 
+# The registry to use for ceph-container builds.
+export CEPH_CONTAINER_REGISTRY=docker.io/andrelucas
+
 # This is the host directory containing tools scripts. These are mounted into
 # the container.
 export TOOLS_SRC=$PWD/tools
 
-# Paths inside the container. These don't magically change with these
-# variables, they're hardcoded into the container image.
+# Paths inside the Ubuntu build container. These don't magically change with
+# these variables, they're hardcoded into the container image.
 export C_CCACHE=/ccache
 export C_RELEASE=/release
 export C_SRC=/src
