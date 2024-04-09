@@ -211,7 +211,7 @@ sed \
 docker build -t "$CEPH_CONTAINER_REGISTRY/$GEN2_IMAGE_NAME:$cc_image_tag" .
 
 # Optionally push all the generated images.
-for img in daemon daemon-gen2 demo "$GEN2_IMAGE_NAME"; do
+for img in daemon-base daemon demo "$GEN2_IMAGE_NAME"; do
     fqimg="$CEPH_CONTAINER_REGISTRY/$img:$cc_image_tag"
     if [[ $upload -eq 1 ]]; then
         docker push "$CEPH_CONTAINER_REGISTRY/$img:$cc_image_tag"

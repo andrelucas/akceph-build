@@ -21,6 +21,9 @@ CentOS VMs.
 ## Example use
 
 ```sh
+# You'll need 'real' Docker, or Podman in daemon mode. Otherwise the
+# filesystem mounts won't work.
+
 # Copy configuration variables. You should check these!
 cp vars.sh.example vars.sh
 
