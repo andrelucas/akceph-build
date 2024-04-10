@@ -38,6 +38,9 @@ cp vars.sh.example vars.sh
 
 # The same, but automatically push the containers to the upstream repository.
 ./official-container.sh -r rpmbuild_v18.2.1 -u
+
+# Build branch RPMs, build containers, and push, all-in-one.
+./official-container.sh -s v18.2.1 -u
 ```
 
 ## Build process
@@ -71,7 +74,8 @@ turn them into upstream containers, and from there into a special
 gen2-specific container.
 
 - Extract some metadata from the packages in `rpmbuild_<BRANCH>`. We'll need
-  this to know what to call things.
+  this to know what to call things. If `-s` is used, the script will build the
+  packages for the rpmbuild directory first.
 
 - Copy the RPMs and SRPMs to a temporary directory.
 
