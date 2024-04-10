@@ -46,6 +46,10 @@ Where:
         1024 and 49151.
     -r RPMBUILD_SRC
         The path to the RPM build source directory.
+    -s BRANCH
+        Build RPMs for the specified branch before building the container.
+        This sets the RPMBUILD_SRC path to rpmbuild_BRANCH, and you won't need
+        to use -r.
     -u
         Upload (push) generated images to the upstream container registry.
     -W 
@@ -55,13 +59,15 @@ EOF
     exit 1
 }
 
+build=0
+build_branch=""
 RPMBUILD_SRC=""
 createrepo_only=0
 upload=0
 webserver_persist=0
 webserver_port="$(shuf -i 1024-49151 -n 1)"
 
-while getopts "Chp:r:uW" o; do
+while getopts "Chp:r:s:uW" o; do
     case "${o}" in
         C)
             createrepo_only=1
@@ -76,6 +82,11 @@ while getopts "Chp:r:uW" o; do
         r)
             RPMBUILD_SRC="$(realpath "${OPTARG}")"
             echo "RPMBUILD_SRC: $RPMBUILD_SRC"
+            ;;
+        s)
+            build=1
+            build_branch="${OPTARG}"
+            RPMBUILD_SRC="$(realpath "rpmbuild_${build_branch}")"
             ;;
         u)
             upload=1
@@ -93,6 +104,12 @@ shift $((OPTIND-1))
 if [ -z "$RPMBUILD_SRC" ]; then
     echo "RPMBUILD_SRC (-r option) is required"
     exit 1
+fi
+
+# -s => build RPMs first.
+if [[ $build -eq 1 ]]; then
+    echo "** Building RPMs for branch $build_branch **"
+    ./rpm-build.sh -s "$build_branch"
 fi
 
 # Extract some version information (and invalidate bad directories in the

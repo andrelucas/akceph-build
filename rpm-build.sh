@@ -64,7 +64,6 @@ while getopts "CRhis:S" o; do
             auto_reldir="rpmbuild_${BRANCH}"
             RPMBUILD_DIR="$(realpath "$(ref_to_folder "$auto_reldir")")"
             echo "Auto-set RPMBUILD_DIR='$RPMBUILD_DIR'"
-            mkdir -p "$RPMBUILD_DIR"
             ;;
         S)
             # NOSRPMS implies NORPMS, since there's nothing to build without
@@ -96,6 +95,23 @@ fi
 if [[ ! -f $CCACHE_CONF ]]; then
     install tools/ccache.conf "$CCACHE_CONF"
 fi
+
+if [[ -z "$RPMBUILD_DIR" ]]; then
+    echo "RPMBUILD_DIR is not set." >&2
+    exit 1
+fi
+
+# Clear down the RPM build directory. This can fail as it's owned by root.
+# Rather than use sudo, just fail with a clear error message.
+if [[ -d "$RPMBUILD_DIR" ]]; then
+    if ! rm -r "${RPMBUILD_DIR:?} >/dev/null"; then
+        echo "Failed to clear down RPMBUILD_DIR. You may need root privileges to delete it." >&2
+        exit 1
+    fi
+fi
+for d in BUILD RPMS SRPMS SOURCES SPECS; do
+    mkdir -p "$RPMBUILD_DIR/$d"
+done
 
 # Copy build scripts into the context dir.
 CONTEXTDIR="$BUILDDIR"
