@@ -1,7 +1,9 @@
 # README for akceph-build
 
 <!-- vscode-markdown-toc -->
-* [tl;dr](#tldr)
+* [Other documents](#Otherdocuments)
+* [Introduction](#Introduction)
+* [Example use](#Exampleuse)
 * [Recommended use](#Recommendeduse)
 	* [Source changes and Debian builds](#SourcechangesandDebianbuilds)
 	* [Warning for Debian builds](#WarningforDebianbuilds)
@@ -26,6 +28,14 @@
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
+
+## <a name='Otherdocuments'></a>Other documents
+
+- Higher-level docs about the various build options: [README-builds](README-builds.md)
+- CentOS-based image docs: [README-centos](README-centos.md)
+- Ubuntu containerised build smoke tests: [README-tests](README-tests.md)
+
+## <a name='Introduction'></a>Introduction
 
 This is a simple Dockerised Ceph build. Much of the tooling assumes an Ubuntu
 20.04 base, however there is also support for building to a CentOS base which
@@ -52,7 +62,7 @@ and since Akamai is an Ubuntu house there's no clear incentive.
 A separate repository based on upstream code will build final containers for
 use external to the development team. This is a developer tool.
 
-## <a name='tldr'></a>Example use
+## <a name='Exampleuse'></a>Example use
 
 ```sh
 # Copy the configuration file and customise for your setup. For standard
