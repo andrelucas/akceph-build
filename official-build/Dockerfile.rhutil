@@ -1,0 +1,4 @@
+FROM quay.io/centos/centos:stream9
+
+RUN dnf install -y dnf-utils createrepo_c rpm-build && \
+    dnf clean all

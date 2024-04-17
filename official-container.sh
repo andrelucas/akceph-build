@@ -8,6 +8,7 @@ SCRIPTNAME="$(basename "$0")"
 OFFICIAL_BUILD_DIR="$SCRIPTDIR/official-build"
 CCDIR="$SCRIPTDIR/third_party/ceph-container"
 
+RHUTIL_IMAGE_NAME=rhutil
 GEN2_IMAGE_NAME=akdaemon-gen2
 
 CENTOS_STREAM_VERSION=8
@@ -112,6 +113,19 @@ if [[ $build -eq 1 ]]; then
     ./rpm-build.sh -s "$build_branch"
 fi
 
+# Build a container with the RPM-related tools we need. This allows us to
+# build the final image on non-Red Hat systems.
+pushd $SCRIPTDIR/official-build
+docker build -t "$RHUTIL_IMAGE_NAME:latest" -f Dockerfile.rhutil .
+popd
+
+function rhutil_run() {
+    echo "Run in rhutil ($RHUTIL_IMAGE_NAME:latest): $@" >&2
+    # Run in the container. Mount RPMBUILD_SRC into the container with the
+    # same directory name, and set the working directory to that directory.
+    docker run --rm -v "$RPMBUILD_SRC":"$RPMBUILD_SRC" -w "$RPMBUILD_SRC" "$RHUTIL_IMAGE_NAME:latest" "$@"
+}
+
 # Extract some version information (and invalidate bad directories in the
 # process).
 rpm_testfile=$(ls "$RPMBUILD_SRC"/RPMS/noarch/cephadm*.rpm)
@@ -120,7 +134,7 @@ if [[ -z $rpm_testfile || ! -e "$rpm_testfile" ]]; then
     exit 1
 fi
 # rpm_version will be the Ceph version, e.g. 18.2.1.
-rpm_version=$(rpm -qp --queryformat '%{VERSION}' "$rpm_testfile")
+rpm_version=$(rhutil_run rpm -qp --queryformat '%{VERSION}' "$rpm_testfile")
 # This is the Ceph major version, e.g. 17 or 18.
 ceph_majorversion=$(echo "$rpm_version" | cut -d. -f1)
 
@@ -142,7 +156,7 @@ esac
 # rpm_pkgrelease will be the 'sub-version', e.g. 35.g649cb767ced.el8 . This is
 # the automatically-generated release number from Ceph's build process (it
 # uses `git describe`). The RPM file has a platform suffix (e.g. '.el8').
-rpm_pkgrelease="$(rpm -qp --queryformat '%{RELEASE}' "$rpm_testfile")"
+rpm_pkgrelease="$(rhutil_run rpm -qp --queryformat '%{RELEASE}' "$rpm_testfile")"
 # rpm_release is rpm_pkgrelease minus the platform suffix. In the example for
 # rpm_pkgrelease, this will be simply 35.g649cb767ced .
 # shellcheck disable=SC2001
@@ -170,13 +184,13 @@ pushd "$repodir"
 
 echo "Copying source RPMS and SRPMS to $(pwd)"
 rsync -a "$RPMBUILD_SRC"/RPMS "$RPMBUILD_SRC"/SRPMS .
+chown -R "$(id -u):$(id -g)" .
 
 # Run createrepo_c on relevant directories.
 for d in RPMS/x86_64 RPMS/noarch SRPMS; do
-    pushd $d
-    echo "Creating Yum repo in $(pwd)"
-    createrepo_c .
-    popd
+    echo "Creating Yum repo in $d"
+    rhutil_run createrepo_c $d
+    ls -lR $d
 done
 
 # Start a web server on the repos we just created.
