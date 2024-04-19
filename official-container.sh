@@ -119,11 +119,33 @@ pushd $SCRIPTDIR/official-build
 docker build -t "$RHUTIL_IMAGE_NAME:latest" -f Dockerfile.rhutil .
 popd
 
-function rhutil_run() {
-    echo "Run in rhutil ($RHUTIL_IMAGE_NAME:latest): $@" >&2
-    # Run in the container. Mount RPMBUILD_SRC into the container with the
-    # same directory name, and set the working directory to that directory.
-    docker run --rm -v "$RPMBUILD_SRC":"$RPMBUILD_SRC" -w "$RPMBUILD_SRC" "$RHUTIL_IMAGE_NAME:latest" "$@"
+# Run a command in the rhutil container, mounting the directory named in the
+# first parameter into the same directory in the container. The container runs
+# as the current uid:gid, so the permissions shouldn't get wedged.
+#
+# This is so we can build Red Hat containers on non-Red Hat hosts. Here we
+# only need rpm and createrepo_c, but it's a relatively general-purpose
+# utility.
+#
+function rhutil_run_mount() {
+    local mdir="$1"
+    shift
+    if [[ ! -d $mdir ]]; then
+        echo "${FUNCNAME[0]}: Directory '$mdir' does not exist" >&2
+        exit 1
+    fi
+    echo "Run in rhutil ($RHUTIL_IMAGE_NAME:latest) with mounted '$mdir': $*" >&2
+    # Run in the container. Mount $mdir into the container with the same
+    # directory name, and set the working directory to that directory.
+    # The --security-opt is to prevent a weird error, detailed here:
+    #   https://gist.github.com/nathabonfim59/b088db8752673e1e7acace8806390242
+    docker run \
+        --user "$(id -u)":"$(id -g)" \
+        --rm \
+        -v "$mdir":"$mdir" -w "$mdir" \
+        --security-opt seccomp=unconfined \
+        "$RHUTIL_IMAGE_NAME:latest" \
+        sh -c "$*"
 }
 
 # Extract some version information (and invalidate bad directories in the
@@ -134,7 +156,7 @@ if [[ -z $rpm_testfile || ! -e "$rpm_testfile" ]]; then
     exit 1
 fi
 # rpm_version will be the Ceph version, e.g. 18.2.1.
-rpm_version=$(rhutil_run rpm -qp --queryformat '%{VERSION}' "$rpm_testfile")
+rpm_version=$(rhutil_run_mount "$RPMBUILD_SRC" rpm -qp --queryformat '%{VERSION}' "$rpm_testfile")
 # This is the Ceph major version, e.g. 17 or 18.
 ceph_majorversion=$(echo "$rpm_version" | cut -d. -f1)
 
@@ -156,7 +178,7 @@ esac
 # rpm_pkgrelease will be the 'sub-version', e.g. 35.g649cb767ced.el8 . This is
 # the automatically-generated release number from Ceph's build process (it
 # uses `git describe`). The RPM file has a platform suffix (e.g. '.el8').
-rpm_pkgrelease="$(rhutil_run rpm -qp --queryformat '%{RELEASE}' "$rpm_testfile")"
+rpm_pkgrelease="$(rhutil_run_mount "$RPMBUILD_SRC" rpm -qp --queryformat '%{RELEASE}' "$rpm_testfile")"
 # rpm_release is rpm_pkgrelease minus the platform suffix. In the example for
 # rpm_pkgrelease, this will be simply 35.g649cb767ced .
 # shellcheck disable=SC2001
@@ -189,8 +211,7 @@ chown -R "$(id -u):$(id -g)" .
 # Run createrepo_c on relevant directories.
 for d in RPMS/x86_64 RPMS/noarch SRPMS; do
     echo "Creating Yum repo in $d"
-    rhutil_run createrepo_c $d
-    ls -lR $d
+    rhutil_run_mount "$repodir" createrepo_c $d
 done
 
 # Start a web server on the repos we just created.
@@ -200,7 +221,19 @@ docker ps -f "id=$id"
 # Check we can actually reach the webserver we just started.
 webserver_url="http://$(hostname -f):$webserver_port"
 echo "Testing web server on $webserver_url"
-if ! curl "$webserver_url/RPMS/noarch/repodata/repomd.xml" >/dev/null; then
+retries=3
+retry=1
+success=0
+while [ $retry -le $retries ]; do
+    echo "Attempt $retry of $retries"
+    if curl -s "$webserver_url/RPMS/noarch/repodata/repomd.xml" >/dev/null; then
+        success=1
+        break
+    fi
+    retry=$((retry + 1))
+    sleep 1
+done
+if [[ $success -ne 1 ]]; then
     echo "Failed to reach the web server we just started on $webserver_url" >&2
     exit 1
 fi
