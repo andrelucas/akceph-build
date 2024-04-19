@@ -104,7 +104,7 @@ fi
 # Clear down the RPM build directory. This can fail as it's owned by root.
 # Rather than use sudo, just fail with a clear error message.
 if [[ -d "$RPMBUILD_DIR" ]]; then
-    if ! rm -r "${RPMBUILD_DIR:?} >/dev/null"; then
+    if ! rm -r "${RPMBUILD_DIR}" >/dev/null; then
         echo "Failed to clear down RPMBUILD_DIR. You may need root privileges to delete it." >&2
         exit 1
     fi
