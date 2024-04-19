@@ -10,13 +10,7 @@
 
 ## Prerequisites
 
-These steps need to be run on a host system that has the Red Hat packaging
-tools, specifically `rpm` and `createrepo_c`. These tools aren't generally
-installed on Ubuntu hosts.
-
-This could also be run containerised if 'container-in-container' mode is
-supported on the host, but this seems complex given how easily we can create
-CentOS VMs.
+This has been tested using Docker, but not with Podman.
 
 ## Example use
 
