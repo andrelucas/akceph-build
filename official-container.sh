@@ -51,6 +51,11 @@ Where:
         Build RPMs for the specified branch before building the container.
         This sets the RPMBUILD_SRC path to rpmbuild_BRANCH, and you won't need
         to use -r.
+    -S BUILD_SRC
+        Build RPMs for the specified source directory before building the
+        container. This sets the RPMBUILD_SRC path to rpmbuild_SRC, and you
+        won't need to use -r. Use this form if your git repo needs
+        authentication to clone it.
     -u
         Upload (push) generated images to the upstream container registry.
     -W 
@@ -62,13 +67,14 @@ EOF
 
 build=0
 build_branch=""
+build_src=""
 RPMBUILD_SRC=""
 createrepo_only=0
 upload=0
 webserver_persist=0
 webserver_port="$(shuf -i 1024-49151 -n 1)"
 
-while getopts "Chp:r:s:uW" o; do
+while getopts "Chp:r:s:S:uW" o; do
     case "${o}" in
         C)
             createrepo_only=1
@@ -88,6 +94,14 @@ while getopts "Chp:r:s:uW" o; do
             build=1
             build_branch="${OPTARG}"
             RPMBUILD_SRC="$(realpath "rpmbuild_${build_branch}")"
+            ;;
+        S)
+            build=1
+            build_src="$(realpath "${OPTARG}")"
+            echo "Using external source directory: $build_src"
+            ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
+            echo "external source branch $ext_branch"
+            RPMBUILD_SRC="$(realpath "rpmbuild_${ext_branch}")"
             ;;
         u)
             upload=1
@@ -109,8 +123,13 @@ fi
 
 # -s => build RPMs first.
 if [[ $build -eq 1 ]]; then
-    echo "** Building RPMs for branch $build_branch **"
-    ./rpm-build.sh -s "$build_branch"
+    if [[ -n $build_src ]]; then
+        echo "Building RPMs for external source directory $build_src"
+        ./rpm-build.sh -S "$build_src"
+    else
+        echo "** Building RPMs for branch $build_branch **"
+        ./rpm-build.sh -s "$build_branch"
+    fi
 fi
 
 # Build a container with the RPM-related tools we need. This allows us to

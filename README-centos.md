@@ -25,7 +25,11 @@ cp vars.sh.example vars.sh
 # branch. This will take some time!
 ./rpm-build.sh -s v18.2.1
 
-# Take the output from the above and package it into standard-ish Ceph
+# Build RPMS and SRPMS from an existing, checked-out tree. You'll have to use
+# this if your repository requires authentication to clone. Don't worry about # the relative path, it will be canonicalised using realpath(1).
+./rpm-build.sh -S ../ceph
+
+# Take the output from the above build and package it into standard-ish Ceph
 # containers using a modified ceph-container repository.
 # The images created will be listed at the end of the run.
 ./official-container.sh -r rpmbuild_v18.2.1
@@ -35,6 +39,9 @@ cp vars.sh.example vars.sh
 
 # Build branch RPMs, build containers, and push, all-in-one.
 ./official-container.sh -s v18.2.1 -u
+
+# Build RPMs from checked-out tree, build continers and push, all-in-one.
+./official-container.sh -S ../ceph -u
 ```
 
 ## Build process
@@ -76,7 +83,7 @@ gen2-specific container.
 - Run `createrepo_c` (a Red Hat tool to generate Yum repositories from a file
   tree) on `RPMS/noarch`, `RPMS/x86_64` and `SRPMS` in the temporary
   directory.
-  
+
 - Run an nginx web server on a random port to advertise the newly-created Yum
   repositories. Test the web server works before proceeding.
 

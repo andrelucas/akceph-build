@@ -23,23 +23,29 @@ Where:
         Show this help message.
     -i
         Start an interactive shell in the container.
+    -n
+        Do not build the SRPMs (and by extension the RPMS). This is useful for
+        debugging the build.
     -R
         Do not build the RPMS. This is useful for debugging the build.
     -s BRANCH
         The branch to check out. This is passed to the container build script.
-    -S
-        Do not build the SRPMs (and by extension the RPMS). This is useful for
-        debugging the build.
+    -S SRCDIR
+        Use an external source directory mounted into the container. This is
+        necessary for git repositories that require authentication to clone.
+
 EOF
     exit 1
 }
 
+EXTERNAL_SRC=0
 NOCLONE=0
 NORPMS=0
 NOSRPMS=0
 interactive=0
+SRCDIR=""
 
-while getopts "CRhis:S" o; do
+while getopts "CRhins:S:" o; do
     case "${o}" in
         C)
             # NOCLONE implies NOSRPMS and NORPMS.
@@ -51,6 +57,12 @@ while getopts "CRhis:S" o; do
             ;;
         i)
             interactive=1
+            ;;
+        n)
+            # NOSRPMS implies NORPMS, since there's nothing to build without
+            # the source RPM.
+            # shellcheck disable=SC2034
+            NOSRPMS=1 NORPMS=1
             ;;
         R)
             # shellcheck disable=SC2034
@@ -66,10 +78,18 @@ while getopts "CRhis:S" o; do
             echo "Auto-set RPMBUILD_DIR='$RPMBUILD_DIR'"
             ;;
         S)
-            # NOSRPMS implies NORPMS, since there's nothing to build without
-            # the source RPM.
-            # shellcheck disable=SC2034
-            NOSRPMS=1 NORPMS=1           
+            EXTERNAL_SRC=1
+            SRCDIR="$(realpath "${OPTARG}")"
+            if [[ ! -f "$SRCDIR/make-srpm.sh" ]]; then
+                echo "External source directory mounted to $SRCDIR does not appear to be a Ceph source clone" >&2
+                exit 1
+            fi
+            echo "external source dir $SRCDIR"
+            ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
+            echo "external source branch $ext_branch"
+            auto_reldir="rpmbuild_${ext_branch}"
+            RPMBUILD_DIR="$(realpath "$(ref_to_folder "$auto_reldir")")"
+            echo "Auto-set RPMBUILD_DIR='$RPMBUILD_DIR'"
             ;;
         *)
             usage
@@ -83,8 +103,8 @@ if [[ -z "$CENTOSIMAGE" ]]; then
     exit 1
 fi
 
-if [[ -z "$BRANCH" ]]; then
-    echo "BRANCH is not set." >&2
+if [[ -z "$BRANCH" && $EXTERNAL_SRC -ne 1 ]]; then
+    echo "BRANCH must be set when a preexisting source dir (-S) is not specified" >&2
     exit 1
 fi
 
@@ -104,7 +124,7 @@ fi
 # Clear down the RPM build directory. This can fail as it's owned by root.
 # Rather than use sudo, just fail with a clear error message.
 if [[ -d "$RPMBUILD_DIR" ]]; then
-    if ! rm -r "${RPMBUILD_DIR}" >/dev/null; then
+    if ! rm -rf "${RPMBUILD_DIR}" >/dev/null; then
         echo "Failed to clear down RPMBUILD_DIR. You may need root privileges to delete it." >&2
         exit 1
     fi
@@ -121,7 +141,7 @@ rsync -avP "$SCRIPTDIR"/build "$CONTEXTDIR"/
 # Create an array of  -e arguments to `docker run`.
 declare -a runenv
 runenv=()
-for ev in BRANCH CEPH_GIT NOCLONE NORPMS NOSRPMS; do
+for ev in BRANCH CEPH_GIT EXTERNAL_SRC NOCLONE NORPMS NOSRPMS SRCDIR; do
     runenv+=(-e)
     runenv+=("$ev=${!ev}")
 done
@@ -144,12 +164,16 @@ if [[ $interactive -eq 1 ]]; then
     runopt+=(--entrypoint /bin/bash)
 fi
 
+if [[ $EXTERNAL_SRC -eq 1 ]]; then
+    runopt+=(-v "$SRCDIR":/src)
+fi
+
 # Run the container, which will output to the release dir an rpmbuild/
 # directory tree. We're interested in RPMS/ and SRPMS/ directories, and the
 # rest can be discarded.
 docker run \
-    "${runopt[@]}" \
     "${runenv[@]}" \
+    "${runopt[@]}" \
     -v "$CCACHE_DIR":"$C_CCACHE" \
     -v "$RPMBUILD_DIR":"$C_RPMBUILD" \
     --rm \
@@ -157,7 +181,7 @@ docker run \
 
 # Clear down the BUILD/ part of the release tree, it's wasted space.
 # This stuff might be owned by root, so allow it to fail.
-rm -rf "$RPMBUILD_DIR"/BUILD 2>&1 | true
+rm -rf "$RPMBUILD_DIR"/BUILD 2>&1 || true
 if [[ -d "$RPMBUILD_DIR"/BUILD ]]; then
 	echo "BUILD dir exists in $RPMBUILD_DIR - you should delete it manually." >&2
 fi
