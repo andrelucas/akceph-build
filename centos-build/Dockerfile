@@ -67,14 +67,33 @@ RUN dnf group install --allowerasing -y \
         "Development Tools" && \
     dnf install --allowerasing -y \
         libstdc++-static \
-        wget
+        wget \
+        xxhash-devel
 
+# Install a newer DWZ, in the hope of avoiding annoying crashes. We can't
+# (safely) uninstall the RPM dwz because it's a dependency of other things, so
+# just nerf it.
+ENV DWZ_URI=https://sourceware.org/ftp/dwz/releases DWZ_VER=0.15
+RUN mv /usr/bin/dwz /usr/bin/dwz.orig
+RUN cd /tmp && \
+    mkdir dwz && cd dwz && \
+    wget "${DWZ_URI}/dwz-${DWZ_VER}.tar.xz" && \
+    wget "${DWZ_URI}/sha512.sum" && \
+    sha512sum -c --ignore-missing sha512.sum && \
+    tar xJf dwz-${DWZ_VER}.tar.xz && \
+    cd dwz && \
+    ./configure && make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf /tmp/dwz
+        
 # This will default ccache to /ccache instead of ~/.ccache, and implicitly
 # default the config file to /ccache/ccache.conf.
 RUN for p in cc c++ gcc g++ clang clang++; do \
         ln -s /usr/local/bin/ccache /usr/local/bin/$p; \
     done
 ENV CCACHE_DIR=/ccache
+
+WORKDIR /src
 
 COPY build.sh /build.sh
 ENTRYPOINT [ "/build.sh" ]
