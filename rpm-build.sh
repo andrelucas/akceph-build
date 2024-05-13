@@ -84,13 +84,13 @@ while getopts "CRhins:S:" o; do
                 echo "External source directory mounted to $SRCDIR does not appear to be a Ceph source clone" >&2
                 exit 1
             fi
-            echo "external source dir $SRCDIR"
+            echo "External source dir $SRCDIR"
             ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
             if [[ $ext_branch == HEAD ]]; then
-                echo "external source appears to be on a detached HEAD, detecting tag"
+                echo "External source appears to be on a detached HEAD, detecting tag"
                 ext_branch="$(cd "$SRCDIR" && git describe --abbrev=0 --tags)"
             fi
-            echo "external source branch/tag $ext_branch"
+            echo "External source branch/tag $ext_branch"
             auto_reldir="rpmbuild_${ext_branch}"
             RPMBUILD_DIR="$(realpath "$(ref_to_folder "$auto_reldir")")"
             echo "Auto-set RPMBUILD_DIR='$RPMBUILD_DIR'"
