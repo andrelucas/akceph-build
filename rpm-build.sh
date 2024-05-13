@@ -128,8 +128,9 @@ fi
 # Clear down the RPM build directory. This can fail as it's owned by root.
 # Rather than use sudo, just fail with a clear error message.
 if [[ -d "$RPMBUILD_DIR" ]]; then
-    if ! rm -rf "${RPMBUILD_DIR}" >/dev/null; then
-        echo "Failed to clear down RPMBUILD_DIR. You may need root privileges to delete it." >&2
+    echo "Attempting to clear $RPMBUILD_DIR"
+    if ! rm -rf "${RPMBUILD_DIR}" 2>/dev/null; then
+        echo "Failed to clear down $RPMBUILD_DIR. You may need root privileges to delete it." >&2
         exit 1
     fi
 fi
@@ -184,8 +185,9 @@ docker run \
     "$CENTOSIMAGE:$TAG" -- "$@"
 
 # Clear down the BUILD/ part of the release tree, it's wasted space.
-# This stuff might be owned by root, so allow it to fail.
-rm -rf "$RPMBUILD_DIR"/BUILD 2>&1 || true
+# This stuff might be owned by root, so allow it to fail. Pipe to dev null
+# because the output makes a mess of the scrollback buffer.
+rm -rf "$RPMBUILD_DIR"/BUILD 2>/dev/null || true
 if [[ -d "$RPMBUILD_DIR"/BUILD ]]; then
 	echo "BUILD dir exists in $RPMBUILD_DIR - you should delete it manually." >&2
 fi
