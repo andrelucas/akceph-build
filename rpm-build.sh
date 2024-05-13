@@ -86,7 +86,11 @@ while getopts "CRhins:S:" o; do
             fi
             echo "external source dir $SRCDIR"
             ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
-            echo "external source branch $ext_branch"
+            if [[ $ext_branch == HEAD ]]; then
+                echo "external source appears to be on a detached HEAD, detecting tag"
+                ext_branch="$(cd "$SRCDIR" && git describe --abbrev=0 --tags)"
+            fi
+            echo "external source branch/tag $ext_branch"
             auto_reldir="rpmbuild_${ext_branch}"
             RPMBUILD_DIR="$(realpath "$(ref_to_folder "$auto_reldir")")"
             echo "Auto-set RPMBUILD_DIR='$RPMBUILD_DIR'"

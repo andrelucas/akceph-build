@@ -100,7 +100,11 @@ while getopts "Chp:r:s:S:uW" o; do
             build_src="$(realpath "${OPTARG}")"
             echo "Using external source directory: $build_src"
             ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
-            echo "external source branch $ext_branch"
+            if [[ $ext_branch == HEAD ]]; then
+                echo "external source appears to be on a detached HEAD, detecting tag"
+                ext_branch="$(cd "$SRCDIR" && git describe --abbrev=0 --tags)"
+            fi
+            echo "external source branch/tag $ext_branch"
             RPMBUILD_SRC="$(realpath "rpmbuild_${ext_branch}")"
             ;;
         u)
