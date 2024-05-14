@@ -47,6 +47,16 @@ fi
 ./make-srpm.sh
 rpm -i /src/ceph-*.src.rpm
 
+# Set RPM build options.
+cat <<EOF >$HOME/.rpmmacros
+# Make it clear where this package is from.
+%packager Akamai Ceph Engineering
+
+# Override the 'fascist build policy'. Without this, any unpackaged files
+# (e.g. the in-tree Expat library and tools) will cause the build to fail.
+%define _unpackaged_files_terminate_build 0
+EOF
+
 cd ~/rpmbuild
 dnf builddep -y SPECS/ceph.spec
 if [[ $NORPMS -eq 1 ]]; then
