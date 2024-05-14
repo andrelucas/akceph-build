@@ -54,7 +54,7 @@ cat <<EOF >$HOME/.rpmmacros
 
 # Override the 'fascist build policy'. Without this, any unpackaged files
 # (e.g. the in-tree Expat library and tools) will cause the build to fail.
-%define _unpackaged_files_terminate_build 0
+%_unpackaged_files_terminate_build 0
 EOF
 
 cd ~/rpmbuild
