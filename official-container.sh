@@ -244,7 +244,24 @@ id="$(docker run -d -p "$webserver_port":80 -v "$repodir":/usr/share/nginx/html:
 docker ps -f "id=$id"
 
 # Check we can actually reach the webserver we just started.
-webserver_url="http://$(hostname -f):$webserver_port"
+#
+# Kludge: We need to do extra work because we can't rely on the host's FQDN
+# being resolvable from DNS, which in turn means it probably won't be
+# resolvable from inside a container. Do the name resolution on the host.
+#
+# This would best be resolved by having the hosts in the DNS, or by having
+# access to more sophisticated orchestration e.g. k8s or even Docker Compose.
+#
+webserver_name="$(hostname -f)"
+# This is painful. Try really heard to get an IPv4 address.
+webserver_ip="$(getent ahosts "$webserver_name" | grep STREAM | grep -v ':' | head -1 | awk '{print $1}')"
+if [[ -z $webserver_ip ]]; then
+    echo "Failed to get an IPv4 address for $webserver_name" >&2
+    exit 1
+fi
+webserver_url="http://$webserver_ip:$webserver_port"
+echo "Web server FQDN '$webserver_name' IP '$webserver_ip' URL '$webserver_url'"
+
 echo "Testing web server on $webserver_url"
 retries=3
 retry=1
