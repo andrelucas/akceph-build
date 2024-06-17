@@ -17,6 +17,7 @@ CENTOS_STREAM_TAG="stream$CENTOS_STREAM_VERSION"
 set -e
 # shellcheck source=vars.sh.example
 source "$SCRIPTDIR/vars.sh"
+# shellcheck source=lib.sh
 source "$SCRIPTDIR/lib.sh"
 
 tmpdir=$(mktemp -d "tmp.XXXXXXXXXX" -p "$SCRIPTDIR")
@@ -140,7 +141,7 @@ fi
 
 # Build a container with the RPM-related tools we need. This allows us to
 # build the final image on non-Red Hat systems.
-pushd $SCRIPTDIR/official-build
+pushd "$SCRIPTDIR"/official-build
 docker build -t "$RHUTIL_IMAGE_NAME:latest" -f Dockerfile.rhutil .
 popd
 

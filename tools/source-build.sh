@@ -213,18 +213,20 @@ function configure() {
 
     declare -a cmake_std_opts
     cmake_std_opts=()
-    cmake_std_opts+=(-DALLOCATOR=tcmalloc)
-    cmake_std_opts+=(-DBOOST_J="$BUILD_NPROC")
-    cmake_std_opts+=(-DCMAKE_BUILD_TYPE="$BUILD_TYPE")
-    cmake_std_opts+=(-DCMAKE_CXX_FLAGS_DEBUG=-fno-lto)
-    cmake_std_opts+=(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
+    cmake_std_opts+=("-DALLOCATOR=tcmalloc")
+    cmake_std_opts+=("-DBOOST_J=$BUILD_NPROC")
+    cmake_std_opts+=("-DCMAKE_BUILD_TYPE=$BUILD_TYPE")
+    cmake_std_opts+=("-DCMAKE_CXX_FLAGS_DEBUG=-fno-lto")
+    cmake_std_opts+=("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
     if [[ $with_ccache -eq 1 ]]; then
-        cmake_std_opts+=(-DWITH_CCACHE=ON)
+        cmake_std_opts+=("-DWITH_CCACHE=ON")
     fi
     if [[ $linker_override -eq 1 ]]; then
-        # Explicitly use ld.gold(1)
-        cmake_std_opts+=(-DCMAKE_LINKER=ld.gold)
-        cmake_std_opts+=(-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold)
+        # Explicitly use ld.gold(1). Note this isn't quite enough, we need a
+        # CMake>=2.39 to *really* use a different linker _every_ time. (See
+        # https://cmake.org/cmake/help/v3.29/variable/CMAKE_LINKER_TYPE.html)
+        cmake_std_opts+=("-DCMAKE_LINKER=ld.gold")
+        cmake_std_opts+=("-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold")
     fi
 
     echo "Configuring with: ${cmake_std_opts[*]} ${cmake_opts[*]}"
