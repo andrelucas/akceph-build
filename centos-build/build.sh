@@ -48,7 +48,7 @@ fi
 rpm -i /src/ceph-*.src.rpm
 
 # Set RPM build options.
-cat <<EOF >$HOME/.rpmmacros
+cat <<EOF >"$HOME"/.rpmmacros
 # Make it clear where this package is from.
 %packager Akamai Ceph Engineering
 
