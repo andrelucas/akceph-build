@@ -6,6 +6,7 @@
 	* [Why three targets?](#Whythreetargets)
 * [Ubuntu target](#Ubuntutarget)
 * [CentOS target](#CentOStarget)
+* [Future: Changing the CentOS target](#Future:ChangingtheCentOStarget)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -96,6 +97,8 @@ images whose structure matches the upstream images, so that tools constructed
 to support the upstream images will work seamlessly with our custom Ceph
 builds.
 
+- Build using the CentOS Stream base image instead of the now-dead CentOS base.
+
 It used to be the case that the tool used to build the upstream images (called
 [ceph-container](https://github.com/ceph/ceph-container)) would build images
 for a variety of container bases, including Ubuntu. This support has been
@@ -103,20 +106,24 @@ removed, and is very unlikely to return.
 
 In addition, the base images until recently were based on CentOS 8, the last
 'regular' CentOS release before the CentOS brand was acquired by Red Hat. Now,
-CentOS 8 has been retired, and the upstream Yum repositories are offline. It
-is possible for the moment to build using CentOS Stream 8, and that's what
-we're doing. However, CentOS Stream 8 is also going end-of-life shortly so no
-doubt we will need to move to CentOS Stream 9 in short order.
+CentOS 8 has been retired, and the upstream Yum repositories are offline.
 
-Finally, once the base image is build, we want (of course) to install
-non-standard Ceph RPM packages into it, built using our non-standard Ceph
-source. There's *no* support for this in ceph-container!
+It was briefly possible to build using CentOS Stream 8, but in late May 2024
+Red Hat also offlined the repositories for Stream 8. In June 2024 our build
+was moved to CentOS Stream 9. Literally no one is happy with this as the
+ultimate target, but it is the best available that we can build with existing
+resources today. Building using Ubuntu does not work well with the
+ceph-container repo. We don't have Red Hat Enterprise Linux licenses at Akamai
+to my knowledge. Building using UBI9 really requires a RHEL machine, which we
+don't have.
+
+Once the base image is built, we want (of course) to install non-standard Ceph
+RPM packages into it, built using our non-standard Ceph source. There's *no*
+support for this in ceph-container!
 
 All this means we have a fork of ceph-container (currently
 [here](https://github.com/andrelucas/ceph-container) in branch `atl-akceph`)
 that allows us to manipulate the `make` invocation so that we can both:
-
-- Build using the CentOS Stream base image instead of the now-dead CentOS base.
 
 - Install our custom packages instead of the upstream official releases.
 
@@ -125,3 +132,42 @@ only really care about `daemon`, though we build the others. We then build one
 more image, `akdaemon-gen2`, which is the `daemon` image plus a couple of
 directives to make the container compatible with our KPP deployment
 environment.
+
+## <a name='Future:ChangingtheCentOStarget'></a>Future: Changing the CentOS target
+
+This is my (André's) speculation about how we deal with the non-optimal nature of this
+target in the future.
+
+No one is happy with using CentOS stream. However, it is by far the easiest
+way to utilise the work done in `ceph-container`. If you look at the `main`
+branch of `ceph-container` as of 2024-06-21, you'll see this:
+
+```makefile
+# All flavor options that can be passed to FLAVORS
+ALL_BUILDABLE_FLAVORS := \
+        pacific,centos,8 \
+        quincy,centos,9 \
+        reef,centos,9 \
+        squid,centos,9 \
+        main,centos,9
+```
+
+These are the 'flavors' of the build that are supported, in the sense that
+_anything_ here is really supported. Even there, the first one
+`pacific,centos,8` now won't build because CentOS 8 (and Stream 8) are
+offline.
+
+All things being equal we want to use the 'official' resources so we have to
+do as little in-house work as possible. Using `ceph-container`, we have a few alternatives:
+
+- Go with a flavour not on the list and hope it works.
+
+- Add support for a different flavour and support it.
+
+Either is a perfectly fine choice. However, `ceph-container` is not at all
+easy to work with. Generating the Dockerfiles from the templates found in the
+source is infuriatingly tricky to understand and extremely error-prone.
+
+Another alternative is to simply pick a target and build the containers we
+need without `ceph-container`. This is, to my mind, the best option. We need
+to schedule the work.

@@ -76,13 +76,22 @@ gen2-specific container.
 
 - Extract some metadata from the packages in `rpmbuild_<BRANCH>`. We'll need
   this to know what to call things. If `-s` is used, the script will build the
-  packages for the rpmbuild directory first.
+  packages for the rpmbuild directory first. If `-S` is used, the script build
+  the packages for the rpmbuild directory using an existing Ceph source
+  checkout directory on the build host. This is necessary if the source
+  repository needs SSH keys to read.
+  
+  (The metadata is extracted using RPM tools, but they're run using another
+  container so you don't need thost tools installed locally.)
 
 - Copy the RPMs and SRPMs to a temporary directory.
 
 - Run `createrepo_c` (a Red Hat tool to generate Yum repositories from a file
   tree) on `RPMS/noarch`, `RPMS/x86_64` and `SRPMS` in the temporary
   directory.
+  
+  (`createrepo_c` is also run using another container so you don't need it
+  installed locally.)
 
 - Run an nginx web server on a random port to advertise the newly-created Yum
   repositories. Test the web server works before proceeding.
