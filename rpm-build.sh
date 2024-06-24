@@ -85,6 +85,8 @@ while getopts "CRhins:S:" o; do
                 exit 1
             fi
             echo "External source dir $SRCDIR"
+            echo "Remove $SRCDIR/ceph.spec to guarantee RPM spec rebuild"
+            rm -f "$SRCDIR"/ceph.spec
             ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
             if [[ $ext_branch == HEAD ]]; then
                 echo "External source appears to be on a detached HEAD, detecting tag"
