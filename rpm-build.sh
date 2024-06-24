@@ -85,8 +85,14 @@ while getopts "CRhins:S:" o; do
                 exit 1
             fi
             echo "External source dir $SRCDIR"
+            # For a SRCDIR build, clear down toplevel source artifacts. It
+            # avoids confusion later - if we want to capture the source RPM
+            # (we should) then there'll only be one *.src.rpm candidate.
             echo "Remove $SRCDIR/ceph.spec to guarantee RPM spec rebuild"
             rm -f "$SRCDIR"/ceph.spec
+            echo "Remove any previous RPM-related build artifacts"
+            rm -f "$SRCDIR"/ceph-*.rpm "$SRCDIR"/ceph-*.bz2
+
             ext_branch="$(cd "$SRCDIR" && git rev-parse --abbrev-ref HEAD)"
             if [[ $ext_branch == HEAD ]]; then
                 echo "External source appears to be on a detached HEAD, detecting tag"
