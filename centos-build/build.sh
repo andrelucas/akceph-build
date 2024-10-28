@@ -41,6 +41,16 @@ fi
 cd /src
 git submodule update --init --recursive
 
+# Set RPM build options.
+echo "Create $HOME/.rpmmacros"
+cat <<EOF >"$HOME"/.rpmmacros
+# Make it clear where this package is from.
+%packager Akamai Ceph Engineering
+
+# Override the 'fascist build policy'. Without this, any unpackaged files
+# (e.g. the in-tree Expat library and tools) will cause the build to fail.
+%_unpackaged_files_terminate_build 0
+EOF
 
 if [[ $NOSRPMS -eq 1 ]]; then
     echo "NOSRPMS=1, stopping before building source RPM."
@@ -70,16 +80,6 @@ srcpkg="ceph-${full_version}${rpmdist}.src.rpm"
 
 echo "Installing source RPM $srcpkg"
 rpm -i /src/"$srcpkg"
-
-# Set RPM build options.
-cat <<EOF >"$HOME"/.rpmmacros
-# Make it clear where this package is from.
-%packager Akamai Ceph Engineering
-
-# Override the 'fascist build policy'. Without this, any unpackaged files
-# (e.g. the in-tree Expat library and tools) will cause the build to fail.
-%_unpackaged_files_terminate_build 0
-EOF
 
 cd ~/rpmbuild
 dnf builddep -y SPECS/ceph.spec
