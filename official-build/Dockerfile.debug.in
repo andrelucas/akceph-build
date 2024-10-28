@@ -1,0 +1,46 @@
+# Gen2 ceph container image with debug symbols. Based on the upstream
+# ceph/daemon image with minor modifications.
+#
+# This should be kept in sync with Dockerfile.in. If Dockerfile.in changes,
+# this file should be updated to match. Only the RUN command installing the
+# debug symbols should change.
+
+# Must be substituted with the built image name.
+FROM __BASE_IMAGE__
+
+# Install debug symbols as well.
+RUN yum -y install \
+    ceph-base-debuginfo \
+    ceph-common-debuginfo \
+    ceph-debuginfo \
+    ceph-exporter-debuginfo \
+    cephfs-mirror-debuginfo \
+    ceph-fuse-debuginfo \
+    ceph-immutable-object-cache-debuginfo \
+    ceph-mds-debuginfo \
+    ceph-mgr-debuginfo \
+    ceph-mon-debuginfo \
+    ceph-osd-debuginfo \
+    ceph-radosgw-debuginfo \
+    ceph-test-debuginfo \
+    libcephfs2-debuginfo \
+    libcephsqlite-debuginfo \
+    librados2-debuginfo \
+    librados-devel-debuginfo \
+    libradosstriper1-debuginfo \
+    librbd1-debuginfo \
+    librgw2-debuginfo \
+    python3-cephfs-debuginfo \
+    python3-rados-debuginfo \
+    python3-rbd-debuginfo \
+    python3-rgw-debuginfo \
+    rbd-fuse-debuginfo \
+    rbd-mirror-debuginfo \
+    rbd-nbd-debuginfo
+
+# The steps below mean we can run the container as non-root
+RUN chown -R ceph:ceph /var/lib/ceph/radosgw
+USER ceph
+
+CMD = ["/bin/sh", "-c"]
+ENTRYPOINT ["/opt/ceph-container/bin/entrypoint.sh"]

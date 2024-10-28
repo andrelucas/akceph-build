@@ -1,5 +1,7 @@
 # Gen2 ceph container image. Based on the upstream ceph/daemon image with
 # minor modifications.
+#
+# If you change this, change Dockerfile.debug.in to match.
 
 # Must be substituted with the built image name.
 FROM __BASE_IMAGE__

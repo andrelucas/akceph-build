@@ -10,6 +10,7 @@ CCDIR="$SCRIPTDIR/third_party/ceph-container"
 
 RHUTIL_IMAGE_NAME=rhutil
 GEN2_IMAGE_NAME=akdaemon-gen2
+GEN2_DEBUG_IMAGE_NAME=akdaemon-gen2-debug
 
 CENTOS_STREAM_VERSION=9
 CENTOS_STREAM_TAG="stream$CENTOS_STREAM_VERSION"
@@ -46,6 +47,13 @@ Where:
     -p PORT
         The port to use for the web server. Default is a random port between
         1024 and 49151.
+    -P PORT
+        Advanced: Skip the build of the ceph-container images (base, daemon and
+        demo). This is for debugging the package builder, to help devs skip the
+        time-consuming ceph-container build step if and only if those containers
+        are already built on the local machine. However, you have to specify
+        the Yum web server port that was used when those containers were built.
+        I did say it was an advanced option.
     -r RPMBUILD_SRC
         The path to the RPM build source directory.
     -s BRANCH
@@ -69,13 +77,14 @@ EOF
 build=0
 build_branch=""
 build_src=""
-RPMBUILD_SRC=""
 createrepo_only=0
+RPMBUILD_SRC=""
+skip_cc_build=0
 upload=0
 webserver_persist=0
 webserver_port="$(shuf -i 1024-49151 -n 1)"
 
-while getopts "Chp:r:s:S:uW" o; do
+while getopts "Chp:P:r:s:S:uW" o; do
     case "${o}" in
         C)
             createrepo_only=1
@@ -86,6 +95,13 @@ while getopts "Chp:r:s:S:uW" o; do
                 echo "Invalid port number: $webserver_port"
                 exit 1
             fi
+            ;;
+        P)
+            # Skip the ceph-container builds. Assumes they already exist, it
+            # will fail if they don't.
+            skip_cc_build=1
+            webserver_port="${OPTARG}"
+            echo "Skipping ceph-container builds, using webserver port $webserver_port"
             ;;
         r)
             RPMBUILD_SRC="$(realpath "${OPTARG}")"
@@ -287,21 +303,25 @@ fi
 
 popd
 
-# Use ceph-container to build the image, using the web server we just started.
-git submodule update --init
-pushd "$CCDIR"
-# Clear down staging/ to avoid any confusion. Don't run 'clean.all', it
-# deletes images which might cause problems.
-rm -rf staging/*
-# Run a very, very specific build target.
-make FLAVORS="$ceph_majorversion_name",centos,"$CENTOS_STREAM_VERSION" \
-    RELEASE="$release_tag" \
-    TAG_REGISTRY="$CEPH_CONTAINER_REGISTRY" \
-    BASEOS_REGISTRY=quay.io/centos BASEOS_REPO=centos BASEOS_TAG="$CENTOS_STREAM_TAG" \
-    CUSTOM_CEPH_YUM_REPO="$webserver_url" \
-    build
+if [[ $skip_cc_build -eq 1 ]]; then
+    echo "Skipping ceph-container builds (they MUST be prebuild or later steps will fail)"
+else
+    # Use ceph-container to build the image, using the web server we just started.
+    git submodule update --init
+    pushd "$CCDIR"
+    # Clear down staging/ to avoid any confusion. Don't run 'clean.all', it
+    # deletes images which might cause problems.
+    rm -rf staging/*
+    # Run a very, very specific build target.
+    make FLAVORS="$ceph_majorversion_name",centos,"$CENTOS_STREAM_VERSION" \
+        RELEASE="$release_tag" \
+        TAG_REGISTRY="$CEPH_CONTAINER_REGISTRY" \
+        BASEOS_REGISTRY=quay.io/centos BASEOS_REPO=centos BASEOS_TAG="$CENTOS_STREAM_TAG" \
+        CUSTOM_CEPH_YUM_REPO="$webserver_url" \
+        build
 
-docker image ls -f 'reference=$release_tag'
+    docker image ls -f 'reference=$release_tag'
+fi
 
 # Now we have three images, daemon-base, daemon, and demo. We want to take the
 # daemon image as the base for an image that gen2 will use.
@@ -315,13 +335,22 @@ daemon_image="$CEPH_CONTAINER_REGISTRY/daemon:$cc_image_tag"
 sed \
     -e "s#__BASE_IMAGE__#$daemon_image#g" \
     "$OFFICIAL_BUILD_DIR"/Dockerfile.in >Dockerfile
+# Build the gen2 image.
 docker build -t "$CEPH_CONTAINER_REGISTRY/$GEN2_IMAGE_NAME:$cc_image_tag" .
 
+# Generate a Dockerfile for the debug gen2 image. This is the gen2 image plus
+# all the debug symbols.
+sed \
+    -e "s#__BASE_IMAGE__#$daemon_image#g" \
+    "$OFFICIAL_BUILD_DIR"/Dockerfile.debug.in >Dockerfile.debug
+# Build the debug image.
+docker build -f Dockerfile.debug -t "$CEPH_CONTAINER_REGISTRY/$GEN2_DEBUG_IMAGE_NAME:$cc_image_tag" .
+
 # Optionally push all the generated images.
-for img in daemon-base daemon demo "$GEN2_IMAGE_NAME"; do
+for img in daemon-base daemon demo "$GEN2_IMAGE_NAME" "$GEN2_DEBUG_IMAGE_NAME"; do
     fqimg="$CEPH_CONTAINER_REGISTRY/$img:$cc_image_tag"
     if [[ $upload -eq 1 ]]; then
-        docker push "$CEPH_CONTAINER_REGISTRY/$img:$cc_image_tag"
+        docker push "$fqimg"
     else
         echo "Skipped push of $fqimg"
     fi
