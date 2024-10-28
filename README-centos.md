@@ -80,7 +80,7 @@ gen2-specific container.
   the packages for the rpmbuild directory using an existing Ceph source
   checkout directory on the build host. This is necessary if the source
   repository needs SSH keys to read.
-  
+
   (The metadata is extracted using RPM tools, but they're run using another
   container so you don't need thost tools installed locally.)
 
@@ -89,7 +89,7 @@ gen2-specific container.
 - Run `createrepo_c` (a Red Hat tool to generate Yum repositories from a file
   tree) on `RPMS/noarch`, `RPMS/x86_64` and `SRPMS` in the temporary
   directory.
-  
+
   (`createrepo_c` is also run using another container so you don't need it
   installed locally.)
 
@@ -102,8 +102,12 @@ gen2-specific container.
   images, using our RPM packages.
 
 - Use the generated `daemon` image as the source to generate our gen2-specific
-  Docker image, which simply runs as a non-root user and changes some
-  permissions.
+  Docker image `akdaemon-gen2`, which simply runs as a non-root user and
+  changes some permissions.
+
+- Similarly, use the `daemon` image as the source to generate a gen2-specific
+  Docker image `akdemon-gen2-debug` which is the same as `akdaemon-gen2`, but
+  with all the debug symbol packages installed.
 
 - If specified, push the images to a remote repository.
 
