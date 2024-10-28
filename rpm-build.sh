@@ -23,6 +23,12 @@ Where:
         Show this help message.
     -i
         Start an interactive shell in the container.
+    -l
+        Remove '--rm' from the Docker command line so we do not delete the
+        container after the end of the run. This is useful for debugging, but
+        can consume a lot of disk space. The exited container will be visible
+        in 'docker ps -a' output. You can't easily run a stopped container, but
+        you can copy files out of it and view its logs.
     -n
         Do not build the SRPMs (and by extension the RPMS). This is useful for
         debugging the build.
@@ -38,14 +44,15 @@ EOF
     exit 1
 }
 
+delete_container=1
 EXTERNAL_SRC=0
+interactive=0
 NOCLONE=0
 NORPMS=0
 NOSRPMS=0
-interactive=0
 SRCDIR=""
 
-while getopts "CRhins:S:" o; do
+while getopts "CRhilns:S:" o; do
     case "${o}" in
         C)
             # NOCLONE implies NOSRPMS and NORPMS.
@@ -57,6 +64,9 @@ while getopts "CRhins:S:" o; do
             ;;
         i)
             interactive=1
+            ;;
+        l)
+            delete_container=0
             ;;
         n)
             # NOSRPMS implies NORPMS, since there's nothing to build without
@@ -173,6 +183,9 @@ declare -a runopt
 runopt=()
 
 runopt+=(-it)
+if [[ $delete_container -eq 1 ]]; then
+    runopt+=(--rm)
+fi
 if [[ $interactive -eq 1 ]]; then
     runopt+=(--entrypoint /bin/bash)
 fi
@@ -189,7 +202,6 @@ docker run \
     "${runopt[@]}" \
     -v "$CCACHE_DIR":"$C_CCACHE" \
     -v "$RPMBUILD_DIR":"$C_RPMBUILD" \
-    --rm \
     "$CENTOSIMAGE:$TAG" -- "$@"
 
 # Clear down the BUILD/ part of the release tree, it's wasted space.
