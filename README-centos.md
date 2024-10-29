@@ -29,10 +29,17 @@ cp vars.sh.example vars.sh
 # this if your repository requires authentication to clone. Don't worry about # the relative path, it will be canonicalised using realpath(1).
 ./rpm-build.sh -S ../ceph
 
+# As above, but build using Debug (-Og).
+./rpm-build.sh -S ../ceph -d
+
 # Take the output from the above build and package it into standard-ish Ceph
 # containers using a modified ceph-container repository.
 # The images created will be listed at the end of the run.
 ./official-container.sh -r rpmbuild_v18.2.1
+
+# As above, but add a '_debug' component to the image tags, marking the builds
+# as Debug so you can tell them from non-Debug.
+./official-container.sh -r rpmbuild_v18.2.1 -d
 
 # The same, but automatically push the containers to the upstream repository.
 ./official-container.sh -r rpmbuild_v18.2.1 -u
@@ -40,8 +47,12 @@ cp vars.sh.example vars.sh
 # Build branch RPMs, build containers, and push, all-in-one.
 ./official-container.sh -s v18.2.1 -u
 
-# Build RPMs from checked-out tree, build continers and push, all-in-one.
+# Build RPMs from checked-out tree, build containers and push, all-in-one.
 ./official-container.sh -S ../ceph -u
+
+# As above, but build in Debug (-Og) mode and push with _debug tag component.
+./official-container.sh -S ../ceph -u -d
+
 ```
 
 ## Build process
