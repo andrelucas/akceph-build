@@ -42,6 +42,9 @@ Usage: $SCRIPTNAME [-h] | -r RPMBUILD_SRC
 Where:
     -C
         Only run createrepo and start the web server, don't build the image.
+    -d
+        Add a '-debug' suffix to the image tag. Otherwise there's no easy way
+        to tell the difference between a debug and non-debug image.
     -h
         Show this help message.
     -p PORT
@@ -78,16 +81,21 @@ build=0
 build_branch=""
 build_src=""
 createrepo_only=0
+PKG_DEBUG=0
 RPMBUILD_SRC=""
 skip_cc_build=0
 upload=0
 webserver_persist=0
 webserver_port="$(shuf -i 1024-49151 -n 1)"
 
-while getopts "Chp:P:r:s:S:uW" o; do
+while getopts "Cdhp:P:r:s:S:uW" o; do
     case "${o}" in
         C)
             createrepo_only=1
+            ;;
+        d)
+            echo "Will mark as DEBUG build"
+            PKG_DEBUG=1
             ;;
         p)
             webserver_port="${OPTARG}"
@@ -144,14 +152,20 @@ if [ -z "$RPMBUILD_SRC" ]; then
     exit 1
 fi
 
+declare -a build_opts
+build_opts=()
+if [[ $PKG_DEBUG -eq 1 ]]; then
+    build_opts+=("-d")
+fi
+
 # -s => build RPMs first.
 if [[ $build -eq 1 ]]; then
     if [[ -n $build_src ]]; then
         echo "Building RPMs for external source directory $build_src"
-        ./rpm-build.sh -S "$build_src"
+        ./rpm-build.sh -S "$build_src" "${build_opts[@]}"
     else
         echo "** Building RPMs for branch $build_branch **"
-        ./rpm-build.sh -s "$build_branch"
+        ./rpm-build.sh -s "$build_branch" "${build_opts[@]}"
     fi
 fi
 
@@ -227,6 +241,10 @@ rpm_pkgrelease="$(rhutil_run_mount "$RPMBUILD_SRC" rpm -qp --queryformat '%{RELE
 rpm_release="$(echo "$rpm_pkgrelease" | sed -E -e 's/.el[0-9]+$//')"
 # This is what we'll tag our container.
 release_tag="${rpm_version}-${rpm_release}"
+# If we're told to mark as debug, add a suffix to the Docker image tag.
+if [[ $PKG_DEBUG -eq 1 ]]; then
+    release_tag="${release_tag}_debug"
+fi
 # The final tag used by ceph-container is computed.
 cc_image_tag="${release_tag}-${ceph_majorversion_name}-centos-${CENTOS_STREAM_TAG}-$(arch)"
 
@@ -240,6 +258,7 @@ Package metadata:
   ceph_majorversion_name=$ceph_majorversion_name
   cc_image_tag=$cc_image_tag
 EOF
+
 
 # Copy the built RPMS and SRPMS to our temporary directory.
 repodir="$(realpath "$tmpdir"/yumrepo)"

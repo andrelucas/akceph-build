@@ -52,6 +52,33 @@ cat <<EOF >"$HOME"/.rpmmacros
 %_unpackaged_files_terminate_build 0
 EOF
 
+if [[ $PKG_DEBUG -eq 1 ]]; then
+    cat <<EOF >>"$HOME"/.rpmmacros
+
+##
+## Debug
+##
+
+## Prevent stripping of binaries.
+## XXX 20241029 ATL: Doesn't work - the Python components don't get installed.
+## XXX My guess is that the Python components are installed by a scriptlet in
+## XXX one of the components that are disabled by this group.
+#%debug_package %{nil}
+#%__strip /bin/true
+#%__spec_install_post %{nil}
+
+# Change the compilation flags. _general_options ripples through into
+# %optflags, but changing it here causes the least ripple effect.
+#
+%_gcc__lto_cflags %nil
+%_general_options -Og -fexceptions -g -grecord-gcc-switches -pipe
+EOF
+fi
+
+echo "=== ~/.rpmmacros ==="
+cat "$HOME"/.rpmmacros
+echo "======"
+
 if [[ $NOSRPMS -eq 1 ]]; then
     echo "NOSRPMS=1, stopping before building source RPM."
     exit 0

@@ -45,6 +45,7 @@ EOF
 }
 
 delete_container=1
+PKG_DEBUG=0
 EXTERNAL_SRC=0
 interactive=0
 NOCLONE=0
@@ -52,12 +53,17 @@ NORPMS=0
 NOSRPMS=0
 SRCDIR=""
 
-while getopts "CRhilns:S:" o; do
+while getopts "CdRhilns:S:" o; do
     case "${o}" in
         C)
             # NOCLONE implies NOSRPMS and NORPMS.
             # shellcheck disable=SC2034
             NOCLONE=1 NOSRPMS=1 NORPMS=1
+            ;;
+        d)
+            echo "Enable debug build"
+            # shellcheck disable=SC2034
+            PKG_DEBUG=1
             ;;
         h)
             usage
@@ -164,7 +170,7 @@ rsync -avP "$SCRIPTDIR"/build "$CONTEXTDIR"/
 # Create an array of  -e arguments to `docker run`.
 declare -a runenv
 runenv=()
-for ev in BRANCH CEPH_GIT EXTERNAL_SRC NOCLONE NORPMS NOSRPMS SRCDIR; do
+for ev in BRANCH CEPH_GIT PKG_DEBUG EXTERNAL_SRC NOCLONE NORPMS NOSRPMS SRCDIR; do
     runenv+=(-e)
     runenv+=("$ev=${!ev}")
 done
@@ -172,6 +178,10 @@ done
 # Get a tag that identifies the commit. We rely on docker to know when to
 # rebuild things at a higher granularity, e.g. if pertinent build args change.
 TAG="$(tag_for_local_head)"
+
+if [[ $PKG_DEBUG -eq 1 ]]; then
+    TAG="${TAG}-debug"
+fi
 
 # Build the image. This will check out the source code and update
 # submodules, but won't do anything else. The rest is done in a container
