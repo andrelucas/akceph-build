@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9
+FROM docker.io/library/rockylinux:8
 
 RUN dnf install -y dnf-utils createrepo_c rpm-build && \
     dnf clean all
