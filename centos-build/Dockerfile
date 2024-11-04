@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9 as deps
+FROM docker.io/library/rockylinux:8 as deps
 
 # Install the base system, plus everything we'll need to build our custom
 # dependencies. We'll reinstall a fresh image later on, you only need the
@@ -9,8 +9,16 @@ FROM quay.io/centos/centos:stream9 as deps
 # - grpc: openssl-dev (may change later), zlib-devel
 # - openssl3: nothing
 #
+
+## The dev tools in CentOS 8 and Rocky 8 are called 'powertools'.
 RUN dnf install -y dnf-plugins-core epel-release && \
-    dnf config-manager --set-enabled crb
+    dnf config-manager --set-enabled powertools
+
+## The dev tools in CentOS Stream 9 and Rocky 9 are called 'crb'
+## ('Codeready Builder' in Red Hat terms).
+#RUN dnf install -y dnf-plugins-core epel-release && \
+#    dnf config-manager --set-enabled crb
+
 # '--allowerasing' is necessary to allow dnf(8) to replace base image versions
 # of curl and coreutils with fuller versions.
 #
@@ -42,7 +50,7 @@ RUN ./grpc.sh
 
 # Main build image. Reinstall base system dependencies, copy custom
 # dependencies from the deps image, then clone and build Ceph SRPMS and RPMS.
-FROM quay.io/centos/centos:stream9 as build
+FROM docker.io/library/rockylinux:8 as build
 
 # Install ccache binary only.
 COPY --from=deps /usr/local/bin/ccache /usr/local/bin/ccache
@@ -55,7 +63,11 @@ COPY --from=deps /usr/local/grpc /usr/local/grpc
 COPY --from=deps /usr/local/openssl3 /usr/local/openssl3
 
 RUN dnf install -y dnf-plugins-core epel-release && \
-    dnf config-manager --set-enabled crb
+    dnf config-manager --set-enabled powertools
+## The dev tools in CentOS Stream 9 and Rocky 9 are called 'crb'
+## ('Codeready Builder' in Red Hat terms).
+#RUN dnf install -y dnf-plugins-core epel-release && \
+#    dnf config-manager --set-enabled crb
 
 # '--allowerasing' is necessary to allow dnf(8) to replace base image versions
 # of curl and coreutils with fuller versions.
