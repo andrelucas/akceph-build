@@ -1,4 +1,4 @@
 [submodule "third_party/ceph-container"]
 	path = third_party/ceph-container
 	url = https://github.com/andrelucas/ceph-container
-	branch = atl-akceph
+	branch = atl-akceph-next
