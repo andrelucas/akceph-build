@@ -12,8 +12,10 @@ RHUTIL_IMAGE_NAME=rhutil
 GEN2_IMAGE_NAME=akdaemon-gen2
 GEN2_DEBUG_IMAGE_NAME=akdaemon-gen2-debug
 
-CENTOS_STREAM_VERSION=9
-CENTOS_STREAM_TAG="stream$CENTOS_STREAM_VERSION"
+# CENTOS_STREAM_VERSION=9
+# CENTOS_STREAM_TAG="stream$CENTOS_STREAM_VERSION"
+ROCKY_VERSION=8
+ROCKY_TAG="$ROCKY_VERSION"
 
 set -e
 # shellcheck source=vars.sh.example
@@ -246,7 +248,7 @@ if [[ $PKG_DEBUG -eq 1 ]]; then
     release_tag="${release_tag}_debug"
 fi
 # The final tag used by ceph-container is computed.
-cc_image_tag="${release_tag}-${ceph_majorversion_name}-centos-${CENTOS_STREAM_TAG}-$(arch)"
+cc_image_tag="${release_tag}-${ceph_majorversion_name}-rocky-${ROCKY_TAG}-$(arch)"
 
 cat <<EOF
 Package metadata:
@@ -326,16 +328,16 @@ if [[ $skip_cc_build -eq 1 ]]; then
     echo "Skipping ceph-container builds (they MUST be prebuild or later steps will fail)"
 else
     # Use ceph-container to build the image, using the web server we just started.
-    git submodule update --init
+    git submodule update --init --remote
     pushd "$CCDIR"
     # Clear down staging/ to avoid any confusion. Don't run 'clean.all', it
     # deletes images which might cause problems.
     rm -rf staging/*
     # Run a very, very specific build target.
-    make FLAVORS="$ceph_majorversion_name",centos,"$CENTOS_STREAM_VERSION" \
+    make FLAVORS="$ceph_majorversion_name",rocky,"$ROCKY_VERSION" \
         RELEASE="$release_tag" \
         TAG_REGISTRY="$CEPH_CONTAINER_REGISTRY" \
-        BASEOS_REGISTRY=quay.io/centos BASEOS_REPO=centos BASEOS_TAG="$CENTOS_STREAM_TAG" \
+        BASEOS_REGISTRY=docker.io/library BASEOS_REPO=rockylinux BASEOS_TAG="$ROCKY_TAG" \
         CUSTOM_CEPH_YUM_REPO="$webserver_url" \
         build
 
