@@ -3,7 +3,7 @@
 # Ceph build metascript. Runs *inside* the container.
 
 ## This is the architecture flag we set unless explicitly disabled.
-FLAG_M_ARCH="-march=znver2"
+FLAG_M_ARCH="-march=x86-64"
 
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 SCRIPTNAME="$(basename "$0")"
@@ -166,9 +166,8 @@ if [[ -f /usr/local/bin/gcc-11 ]]; then
 fi
 
 if [[ $arch_set -eq 1 ]]; then
-    # Set the architecture to znver2. See
-    # https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html but note that we're
-    # running an old GCC.
+    # See https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html but note that
+    # we're running an old GCC.
     echo "Setting architecture flag $FLAG_M_ARCH"
     export CFLAGS="$FLAG_M_ARCH"
     export CXXFLAGS="$FLAG_M_ARCH"
